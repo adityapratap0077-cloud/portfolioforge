@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PortfolioForge — Turn any GitHub profile into a luxury portfolio</title>
+<meta name="description" content="Paste a GitHub username. Get a beautiful, luxury portfolio in seconds.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div class="grain" aria-hidden="true"></div>
+
+<!-- ══════════ GENERATOR VIEW ══════════ -->
+<main id="view-generator" class="view">
+  <div class="gen-inner">
+    <div class="brand"><span class="brand-mark">◆</span> PortfolioForge</div>
+    <p class="eyebrow">GitHub → Portfolio · in seconds</p>
+    <h1 class="gen-title">Turn any GitHub profile<br>into a <em>luxury</em> portfolio.</h1>
+    <p class="gen-sub">Paste a username. We fetch the public profile, rank the best repositories by stars, and forge a dark, editorial portfolio page — ready to download.</p>
+
+    <form id="gen-form" class="gen-form" autocomplete="off">
+      <div class="input-wrap">
+        <span class="at">@</span>
+        <input id="username-input" type="text" placeholder="github username" spellcheck="false" aria-label="GitHub username">
+      </div>
+      <button type="submit" class="btn-gold">Generate <span aria-hidden="true">→</span></button>
+    </form>
+
+    <div class="chips">
+      <span class="chips-label">Try a demo</span>
+      <button class="chip" data-user="torvalds">torvalds</button>
+      <button class="chip" data-user="sindresorhus">sindresorhus</button>
+      <button class="chip" data-user="gaearon">gaearon</button>
+    </div>
+
+    <p class="gen-note">No sign-up · No API keys · Only public GitHub data · 100% client-side</p>
+  </div>
+</main>
+
+<!-- ══════════ LOADING VIEW ══════════ -->
+<section id="view-loading" class="view" hidden>
+  <div class="wrap">
+    <div class="toolbar sk-row">
+      <div class="sk sk-pill"></div>
+      <div class="sk sk-pill short"></div>
+    </div>
+    <div class="hero">
+      <div class="sk sk-avatar"></div>
+      <div class="hero-text">
+        <div class="sk sk-line w60"></div>
+        <div class="sk sk-line w90"></div>
+        <div class="sk sk-line w40"></div>
+      </div>
+    </div>
+    <div class="stats">
+      <div class="sk sk-stat"></div><div class="sk sk-stat"></div><div class="sk sk-stat"></div><div class="sk sk-stat"></div>
+    </div>
+    <div class="sk sk-line w30 section-gap"></div>
+    <div class="work-grid">
+      <div class="sk sk-card"></div><div class="sk sk-card"></div><div class="sk sk-card"></div>
+      <div class="sk sk-card"></div><div class="sk sk-card"></div><div class="sk sk-card"></div>
+    </div>
+    <p class="loading-msg"><span class="spinner"></span> Forging portfolio…</p>
+  </div>
+</section>
+
+<!-- ══════════ ERROR VIEW ══════════ -->
+<section id="view-error" class="view" hidden>
+  <div class="gen-inner">
+    <div class="brand"><span class="brand-mark">◆</span> PortfolioForge</div>
+    <div class="error-card">
+      <p class="eyebrow error-eyebrow">Something went wrong</p>
+      <h2 id="error-title" class="error-title">User not found</h2>
+      <p id="error-msg" class="error-msg"></p>
+      <div class="error-actions">
+        <button id="retry-btn" class="btn-gold">Try again</button>
+        <button id="error-back-btn" class="btn-ghost">Start over</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ══════════ PORTFOLIO VIEW ══════════ -->
+<div id="view-portfolio" class="view" hidden>
+  <div class="toolbar">
+    <div class="wrap toolbar-inner">
+      <span class="brand small"><span class="brand-mark">◆</span> PortfolioForge</span>
+      <div class="toolbar-actions">
+        <button id="download-btn" class="btn-ghost">⭳ Download HTML</button>
+        <button id="startover-btn" class="btn-ghost">Start over</button>
+      </div>
+    </div>
+  </div>
+
+  <main class="wrap portfolio">
+    <header class="hero reveal">
+      <img id="pf-avatar" class="avatar" alt="GitHub avatar">
+      <div class="hero-text">
+        <p class="eyebrow">Portfolio · forged from GitHub</p>
+        <h1 id="pf-name" class="pf-name"></h1>
+        <p id="pf-bio" class="pf-bio"></p>
+        <p class="pf-meta"><span id="pf-location"></span><span id="pf-meta-sep"> · </span><a id="pf-github" target="_blank" rel="noopener"></a></p>
+      </div>
+    </header>
+
+    <section class="stats reveal">
+      <div class="stat"><span id="st-repos" class="stat-num"></span><span class="stat-label">Public repos</span></div>
+      <div class="stat"><span id="st-followers" class="stat-num"></span><span class="stat-label">Followers</span></div>
+      <div class="stat"><span id="st-stars" class="stat-num"></span><span class="stat-label">Total stars</span></div>
+      <div class="stat"><span id="st-forks" class="stat-num"></span><span class="stat-label">Total forks</span></div>
+    </section>
+
+    <section class="reveal">
+      <p class="eyebrow">Selected Work</p>
+      <h2 class="section-title">Top repositories <span class="section-note">— ranked by stars</span></h2>
+      <div id="work-grid" class="work-grid"></div>
+    </section>
+
+    <section id="lang-section" class="reveal">
+      <p class="eyebrow">Toolbox</p>
+      <h2 class="section-title">Languages <span class="section-note">— by repository</span></h2>
+      <div id="lang-bar" class="lang-bar"></div>
+      <div id="lang-legend" class="lang-legend"></div>
+    </section>
+
+    <footer class="pf-footer reveal">
+      <div class="footer-rule"></div>
+      <p>Forged with <span class="brand-mark">◆</span> <strong>PortfolioForge</strong> — from public GitHub data.</p>
+    </footer>
+  </main>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
