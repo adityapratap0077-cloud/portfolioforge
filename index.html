@@ -44,7 +44,7 @@
 <!-- ══════════ LOADING VIEW ══════════ -->
 <section id="view-loading" class="view" hidden>
   <div class="wrap">
-    <div class="toolbar sk-row">
+    <div class="sk-row">
       <div class="sk sk-pill"></div>
       <div class="sk sk-pill short"></div>
     </div>
@@ -57,13 +57,14 @@
       </div>
     </div>
     <div class="stats">
-      <div class="sk sk-stat"></div><div class="sk sk-stat"></div><div class="sk sk-stat"></div><div class="sk sk-stat"></div>
+      <div class="sk sk-stat"></div><div class="sk sk-stat"></div><div class="sk sk-stat"></div><div class="sk sk-stat"></div><div class="sk sk-stat"></div>
     </div>
     <div class="sk sk-line w30 section-gap"></div>
-    <div class="work-grid">
-      <div class="sk sk-card"></div><div class="sk sk-card"></div><div class="sk sk-card"></div>
-      <div class="sk sk-card"></div><div class="sk sk-card"></div><div class="sk sk-card"></div>
+    <div class="work-list">
+      <div class="sk sk-work"></div><div class="sk sk-work"></div><div class="sk sk-work"></div>
     </div>
+    <div class="sk sk-line w30 section-gap"></div>
+    <div class="sk sk-line w80"></div><div class="sk sk-line w60"></div><div class="sk sk-line w70"></div>
     <p class="loading-msg"><span class="spinner"></span> Forging portfolio…</p>
   </div>
 </section>
@@ -94,37 +95,90 @@
         <button id="startover-btn" class="btn-ghost">Start over</button>
       </div>
     </div>
+    <nav class="mini-nav" aria-label="Portfolio sections">
+      <div class="wrap mini-nav-inner">
+        <a href="#sec-hero">Portrait</a>
+        <a href="#sec-about">About</a>
+        <a href="#sec-work">Work</a>
+        <a href="#sec-activity">Activity</a>
+        <a href="#sec-stack">Stack</a>
+        <a href="#sec-journey">Journey</a>
+        <a href="#sec-contact">Contact</a>
+      </div>
+    </nav>
   </div>
 
   <main class="wrap portfolio">
-    <header class="hero reveal">
+    <!-- 01 · HERO -->
+    <header id="sec-hero" class="hero reveal">
       <img id="pf-avatar" class="avatar" alt="GitHub avatar">
       <div class="hero-text">
-        <p class="eyebrow">Portfolio · forged from GitHub</p>
+        <p class="sec-eyebrow"><span class="sec-num">01</span> / Portrait</p>
         <h1 id="pf-name" class="pf-name"></h1>
-        <p id="pf-bio" class="pf-bio"></p>
+        <p id="pf-tagline" class="pf-tagline"></p>
         <p class="pf-meta"><span id="pf-location"></span><span id="pf-meta-sep"> · </span><a id="pf-github" target="_blank" rel="noopener"></a></p>
+        <a href="#sec-about" class="scroll-cue" aria-label="Scroll to about section"><span></span>Scroll</a>
       </div>
     </header>
 
-    <section class="stats reveal">
-      <div class="stat"><span id="st-repos" class="stat-num"></span><span class="stat-label">Public repos</span></div>
-      <div class="stat"><span id="st-followers" class="stat-num"></span><span class="stat-label">Followers</span></div>
-      <div class="stat"><span id="st-stars" class="stat-num"></span><span class="stat-label">Total stars</span></div>
-      <div class="stat"><span id="st-forks" class="stat-num"></span><span class="stat-label">Total forks</span></div>
+    <!-- 02 · ABOUT -->
+    <section id="sec-about" class="reveal">
+      <p class="sec-eyebrow"><span class="sec-num">02</span> / About</p>
+      <h2 class="sec-title">The Developer</h2>
+      <div class="hairline"></div>
+      <p id="about-bio" class="about-bio dropcap"></p>
+      <p id="about-meta" class="about-meta"></p>
+      <div class="stats">
+        <div class="stat"><span id="st-repos" class="stat-num"></span><span class="stat-label">Public repos</span></div>
+        <div class="stat"><span id="st-followers" class="stat-num"></span><span class="stat-label">Followers</span></div>
+        <div class="stat"><span id="st-stars" class="stat-num"></span><span class="stat-label">Total stars</span></div>
+        <div class="stat"><span id="st-forks" class="stat-num"></span><span class="stat-label">Total forks</span></div>
+        <div class="stat"><span id="st-years" class="stat-num"></span><span class="stat-label">Years on GitHub</span></div>
+      </div>
     </section>
 
-    <section class="reveal">
-      <p class="eyebrow">Selected Work</p>
-      <h2 class="section-title">Top repositories <span class="section-note">— ranked by stars</span></h2>
-      <div id="work-grid" class="work-grid"></div>
+    <!-- 03 · SELECTED WORK -->
+    <section id="sec-work" class="reveal">
+      <p class="sec-eyebrow"><span class="sec-num">03</span> / Selected Work</p>
+      <h2 class="sec-title">Selected Work <span class="section-note">— top repositories, ranked by stars</span></h2>
+      <div class="hairline"></div>
+      <p id="work-note" class="inline-note" hidden></p>
+      <div id="work-grid" class="work-list"></div>
     </section>
 
+    <!-- 04 · ACTIVITY -->
+    <section id="sec-activity" class="reveal">
+      <p class="sec-eyebrow"><span class="sec-num">04</span> / Activity</p>
+      <h2 class="sec-title">Recent Activity <span class="section-note">— public events</span></h2>
+      <div class="hairline"></div>
+      <p id="activity-note" class="inline-note" hidden></p>
+      <div id="activity-timeline" class="timeline"></div>
+    </section>
+
+    <!-- 05 · TECH STACK -->
     <section id="lang-section" class="reveal">
-      <p class="eyebrow">Toolbox</p>
-      <h2 class="section-title">Languages <span class="section-note">— by repository</span></h2>
+      <p class="sec-eyebrow"><span class="sec-num">05</span> / Toolbox</p>
+      <h2 class="sec-title">Tech Stack <span class="section-note">— languages by repository</span></h2>
+      <div class="hairline"></div>
       <div id="lang-bar" class="lang-bar"></div>
       <div id="lang-legend" class="lang-legend"></div>
+    </section>
+
+    <!-- 06 · JOURNEY -->
+    <section id="sec-journey" class="reveal">
+      <p class="sec-eyebrow"><span class="sec-num">06</span> / Journey</p>
+      <h2 class="sec-title">The Journey</h2>
+      <div class="hairline"></div>
+      <ol id="journey-list" class="journey"></ol>
+    </section>
+
+    <!-- 07 · CONTACT -->
+    <section id="sec-contact" class="reveal">
+      <p class="sec-eyebrow"><span class="sec-num">07</span> / Contact</p>
+      <h2 class="sec-title">Let&rsquo;s build something.</h2>
+      <div class="hairline"></div>
+      <p class="contact-sub">Open to collaboration, open source, and interesting problems.</p>
+      <div id="contact-links" class="contact-actions"></div>
     </section>
 
     <footer class="pf-footer reveal">
