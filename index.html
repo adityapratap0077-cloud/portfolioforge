@@ -5,9 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>PortfolioForge — Turn any GitHub profile into a luxury portfolio</title>
 <meta name="description" content="Paste a GitHub username. Get a beautiful, luxury portfolio in seconds.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -87,10 +84,12 @@
 
 <!-- ══════════ PORTFOLIO VIEW ══════════ -->
 <div id="view-portfolio" class="view" hidden>
+  <div class="fx-orbs" aria-hidden="true"><div class="orb orb-1"></div><div class="orb orb-2"></div><div class="orb orb-3"></div></div>
   <div class="toolbar">
     <div class="wrap toolbar-inner">
       <span class="brand small"><span class="brand-mark">◆</span> PortfolioForge</span>
       <div class="toolbar-actions">
+        <button id="customize-btn" class="btn-gold">✦ Customize</button>
         <button id="download-btn" class="btn-ghost">⭳ Download HTML</button>
         <button id="startover-btn" class="btn-ghost">Start over</button>
       </div>
@@ -100,9 +99,9 @@
         <a href="#sec-hero">Portrait</a>
         <a href="#sec-about">About</a>
         <a href="#sec-work">Work</a>
-        <a href="#sec-activity">Activity</a>
-        <a href="#sec-stack">Stack</a>
-        <a href="#sec-journey">Journey</a>
+        <a href="#sec-activity" data-nav="activity">Activity</a>
+        <a href="#sec-stack" data-nav="stack">Stack</a>
+        <a href="#sec-journey" data-nav="journey">Journey</a>
         <a href="#sec-contact">Contact</a>
       </div>
     </nav>
@@ -111,8 +110,9 @@
   <main class="wrap portfolio">
     <!-- 01 · HERO -->
     <header id="sec-hero" class="hero reveal">
-      <img id="pf-avatar" class="avatar" alt="GitHub avatar">
-      <div class="hero-text">
+      <canvas id="pf-particles" aria-hidden="true"></canvas>
+      <img id="pf-avatar" class="avatar" data-depth="26" alt="GitHub avatar">
+      <div class="hero-text" data-depth="12">
         <p class="sec-eyebrow"><span class="sec-num">01</span> / Portrait</p>
         <h1 id="pf-name" class="pf-name"></h1>
         <p id="pf-tagline" class="pf-tagline"></p>
@@ -156,7 +156,7 @@
     </section>
 
     <!-- 05 · TECH STACK -->
-    <section id="lang-section" class="reveal">
+    <section id="sec-stack" class="reveal">
       <p class="sec-eyebrow"><span class="sec-num">05</span> / Toolbox</p>
       <h2 class="sec-title">Tech Stack <span class="section-note">— languages by repository</span></h2>
       <div class="hairline"></div>
@@ -186,6 +186,48 @@
       <p>Forged with <span class="brand-mark">◆</span> <strong>PortfolioForge</strong> — from public GitHub data.</p>
     </footer>
   </main>
+
+  <!-- ══════════ CUSTOMIZE DRAWER ══════════ -->
+  <div id="drawer-scrim" class="scrim" hidden></div>
+  <aside id="drawer" class="drawer" aria-label="Customize portfolio" hidden>
+    <div class="drawer-head">
+      <div>
+        <p class="eyebrow" style="margin:0 0 6px">Make it yours</p>
+        <h2 class="drawer-title">Customize</h2>
+      </div>
+      <button id="drawer-close" class="btn-ghost" aria-label="Close customize panel">✕</button>
+    </div>
+    <div class="drawer-body">
+      <div class="ctl-group">
+        <h3>Theme</h3>
+        <div id="theme-swatches" class="swatches"></div>
+      </div>
+      <div class="ctl-group">
+        <h3>Typography</h3>
+        <div id="font-options" class="font-options"></div>
+      </div>
+      <div class="ctl-group">
+        <h3>Sections</h3>
+        <div id="section-toggles" class="toggles"></div>
+        <p class="ctl-hint">About, Selected Work and Contact are always shown.</p>
+      </div>
+      <div class="ctl-group">
+        <h3>Your words</h3>
+        <label class="fld"><span>Tagline</span><input id="fld-tagline" type="text" maxlength="140" placeholder="Leave blank to use the GitHub bio"></label>
+        <label class="fld"><span>Bio</span><textarea id="fld-bio" rows="4" maxlength="600" placeholder="Leave blank to use the GitHub bio"></textarea></label>
+      </div>
+      <div class="ctl-group">
+        <h3>Motion &amp; depth</h3>
+        <label class="switch"><input id="tgl-motion" type="checkbox"><span class="knob" aria-hidden="true"></span><span class="switch-label">3D depth &amp; motion</span></label>
+        <p class="ctl-hint">Parallax hero, tilting project cards, ambient particles and scroll reveals. Automatically disabled if you prefer reduced motion.</p>
+      </div>
+      <div class="ctl-group">
+        <h3>Density</h3>
+        <div id="density-options" class="seg" role="group" aria-label="Density"></div>
+      </div>
+    </div>
+    <div class="drawer-foot"><p>Changes apply instantly · Download HTML keeps everything</p></div>
+  </aside>
 </div>
 
 <script src="app.js"></script>
