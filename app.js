@@ -287,7 +287,7 @@
 
     items.push({
       title: fmtNum(user.public_repos) + " repos and counting",
-      detail: esc(String(user.followers)) + " followers watching the journey unfold."
+      detail: esc(fmtNum(user.public_repos)) + " public repositories shipped — the archive keeps growing."
     });
 
     if (topRepo && (topRepo.stargazers_count || 0) > 0) {
