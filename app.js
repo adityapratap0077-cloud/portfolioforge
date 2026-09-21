@@ -337,6 +337,71 @@
     return out.join("\n");
   }
 
+  /* ASCII85Decode: 'z' = four zero bytes, '~>' ends the data, whitespace ignored */
+  function ascii85Decode(u8) {
+    var vals = [], i, c;
+    for (i = 0; i < u8.length; i++) {
+      c = u8[i];
+      if (c === 126) break;                  /* '~' of the '~>' end marker */
+      if (c === 122) vals.push("z");         /* 'z' */
+      else if (c >= 33 && c <= 117) vals.push(c - 33);  /* '!'..'u' */
+    }
+    var out = [];
+    for (i = 0; i < vals.length;) {
+      if (vals[i] === "z") { out.push(0, 0, 0, 0); i++; continue; }
+      var v = 0, n = 0, k;
+      while (n < 5 && i + n < vals.length && vals[i + n] !== "z") { v = v * 85 + vals[i + n]; n++; }
+      for (k = n; k < 5; k++) v = v * 85 + 84;   /* pad a short final group with 'u' */
+      var b = [(v >>> 24) & 255, (v >>> 16) & 255, (v >>> 8) & 255, v & 255];
+      for (k = 0; k < n - 1; k++) out.push(b[k]);
+      i += n;
+    }
+    return new Uint8Array(out);
+  }
+
+  /* ASCIIHexDecode: hex pairs, '>' ends the data, odd tail padded with 0 */
+  function asciiHexDecode(u8) {
+    var hex = "", i, c;
+    for (i = 0; i < u8.length; i++) {
+      c = u8[i];
+      if (c === 62) break;                  /* '>' */
+      if ((c >= 48 && c <= 57) || (c >= 65 && c <= 70) || (c >= 97 && c <= 102))
+        hex += String.fromCharCode(c);
+    }
+    if (hex.length % 2) hex += "0";
+    var out = [];
+    for (i = 0; i < hex.length; i += 2) out.push(parseInt(hex.substr(i, 2), 16));
+    return new Uint8Array(out);
+  }
+
+  /* ordered filter chain from a stream dict:
+     /Filter /FlateDecode  or  /Filter [/ASCII85Decode /FlateDecode] */
+  function pdfFilterNames(dict) {
+    var m = dict.match(/\/Filter\s*(\[[^\]]*\]|\/[A-Za-z0-9]+)/);
+    if (!m) return [];
+    var names = [], mm = m[1].match(/\/([A-Za-z0-9]+)/g) || [], i;
+    for (i = 0; i < mm.length; i++) names.push(mm[i].slice(1));
+    return names;
+  }
+  var PDF_SUPPORTED_FILTERS = { FlateDecode: 1, Fl: 1, ASCII85Decode: 1, A85: 1,
+                                ASCIIHexDecode: 1, AHx: 1 };
+
+  /* run a stream's filter chain in order, left to right */
+  function decodePdfStreamData(data, filters) {
+    var p = Promise.resolve(data);
+    filters.forEach(function (f) {
+      p = p.then(function (d) {
+        if (f === "FlateDecode" || f === "Fl")
+          return inflateAsync(d, "deflate").then(function (ab) { return new Uint8Array(ab); });
+        if (f === "ASCII85Decode" || f === "A85") return ascii85Decode(d);
+        if (f === "ASCIIHexDecode" || f === "AHx") return asciiHexDecode(d);
+        throw new Error("unsupported PDF filter: " + f);
+      });
+    });
+    return p;
+  }
+
+
   function parsePdfBytes(buf) {
     var bytes = new Uint8Array(buf), latin = "";
     for (var i = 0; i < bytes.length; i++) latin += String.fromCharCode(bytes[i]);
@@ -347,18 +412,21 @@
       var dict = dictStart >= 0 ? latin.slice(dictStart, m.index) : "";
       var dataStart = m.index + 6 + m[1].length;
       var data = bytes.slice(dataStart, dataStart + m[2].length);
-      if (/FlateDecode/.test(dict)) jobs.push({ data: data, flate: true });
-      else if (!/Filter/.test(dict)) jobs.push({ data: data, flate: false });
-      /* other filters (LZW, DCT, \u2026) are skipped \u2014 usually images */
+      var filters = pdfFilterNames(dict), ok = true, fi;
+      for (fi = 0; fi < filters.length; fi++) {
+        if (!PDF_SUPPORTED_FILTERS[filters[fi]]) { ok = false; break; }
+      }
+      /* supported filter chains are decoded in order; anything else
+         (LZW, DCT, Crypt...) is skipped -- usually images */
+      if (ok) jobs.push({ data: data, filters: filters });
     }
     if (!jobs.length) { var e0 = new Error("no readable content streams"); e0.code = "unparsable"; throw e0; }
     var ps = jobs.map(function (j) {
-      if (j.flate) {
-        return inflateAsync(j.data, "deflate").then(function (ab) {
-          return new TextDecoder("latin1").decode(ab);
-        }).catch(function () { return ""; });
-      }
-      return Promise.resolve(new TextDecoder("latin1").decode(j.data));
+      var decoded = j.filters.length ? decodePdfStreamData(j.data, j.filters)
+                                     : Promise.resolve(j.data);
+      return decoded.then(function (u8) {
+        return new TextDecoder("latin1").decode(u8);
+      }).catch(function () { return ""; });
     });
     return Promise.all(ps).then(function (parts) {
       var text = parts.map(extractPdfText).join("\n")
@@ -388,7 +456,8 @@
     awards: ["awards", "honors", "achievements", "accomplishments"]
   };
   function sectionKeyOf(line) {
-    var norm = line.toLowerCase().replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
+    var norm = line.toLowerCase().replace(/\(.*?\)/g, " ")
+      .replace(/[^a-z0-9 ]/g, " ").replace(/\s+/g, " ").trim();
     if (!norm || norm.length > 48) return null;
     for (var k in SECTION_KEYS) {
       var arr = SECTION_KEYS[k];
@@ -398,8 +467,8 @@
     }
     return null;
   }
-  function isBullet(l) { return /^[\u2022\-\*\u2013\u2014\u25aa\u25e6\u2023\u00b7]\s+/.test(l) || /^\d+[.)]\s+/.test(l); }
-  function stripBullet(l) { return l.replace(/^[\u2022\-\*\u2013\u2014\u25aa\u25e6\u2023\u00b7]\s+/, "").replace(/^\d+[.)]\s+/, ""); }
+  function isBullet(l) { return /^[\u2022\-\*\u2013\u2014\u25aa\u25e6\u2023\u00b7\x7f]\s+/.test(l) || /^\d+[.)]\s+/.test(l); }
+  function stripBullet(l) { return l.replace(/^[\u2022\-\*\u2013\u2014\u25aa\u25e6\u2023\u00b7\x7f]\s+/, "").replace(/^\d+[.)]\s+/, ""); }
   function splitTitleCompany(line) {
     if (/^(?:(jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)\w*\s+)?\d{4}\s*[–—-]\s*/i.test(line)) return null;
     if (looksLikeLocation(line)) return null;
@@ -477,10 +546,15 @@
       var bare = headText.match(/(?:^|\s)([a-z0-9\-]+\.(?:com|dev|io|me|design|co|in|net|org))(?:\s|$)/i);
       if (bare && !/linkedin|github/i.test(bare[1])) r.links.website = "https://" + bare[1];
     }
-    for (var loi = 0; loi < head.length; loi++) {
-      if (/@/.test(head[loi])) continue;
-      var lm = head[loi].match(/([A-Z][A-Za-z'.\-]*(?:\s+[A-Z][A-Za-z'.\-]*)?),\s*([A-Z][A-Za-z'.\-]*(?:\s+[A-Z][A-Za-z'.\-]*)?)/);
-      if (lm) { r.location = lm[1] + ", " + lm[2]; break; }
+    for (var loi = 0; loi < head.length && !r.location; loi++) {
+      /* contact lines are often "City, State | email | phone" -- check each segment */
+      var segs = head[loi].split(/\s*[|\u2022\u00b7]\s*/);
+      for (var sgi = 0; sgi < segs.length; sgi++) {
+        var seg = segs[sgi].trim();
+        if (!seg || /@/.test(seg) || /^\+?[\d\s().\-]{7,}$/.test(seg)) continue;
+        var lm = seg.match(/([A-Z][A-Za-z'.\-]*(?:\s+[A-Z][A-Za-z'.\-]*)?),\s*([A-Z][A-Za-z'.\-]*(?:\s+[A-Z][A-Za-z'.\-]*)?)/);
+        if (lm) { r.location = lm[1] + ", " + lm[2]; break; }
+      }
     }
 
     /* experience */
@@ -503,6 +577,10 @@
         return;
       }
       var tc = core ? splitTitleCompany(core) : null;
+      if (cur && cur.bullets.length > 0 && !tc && !dm && /^[a-z]/.test(core)) {
+        cur.bullets[cur.bullets.length - 1] += " " + core;  /* wrapped bullet line */
+        return;
+      }
       var startNew = !!tc || !!dm || !cur || cur.bullets.length > 0 || (cur.title && cur.dates);
       if (startNew) {
         pushExp();
@@ -531,17 +609,34 @@
         return;
       }
       if (isBullet(l)) {
-        if (!pc) pc = newProj();
-        if (pc.bullets.length < 4) pc.bullets.push(stripBullet(l));
-        return;
+        var stripped = stripBullet(l);
+        var titled = /\s+[\u2013\u2014]\s+|\s*:\s*/.test(stripped);
+        var pcBody = pc && (pc.description || pc.bullets.length || pc.tech.length);
+        /* resume project lists are often bulleted "Name -- one-liner" lines;
+           a titled line starts a new project once the current one has content */
+        if (titled && (!pc || !pc.name || pcBody)) { l = stripped; }
+        else {
+          if (!pc) pc = newProj();
+          if (pc.bullets.length < 4) pc.bullets.push(stripped);
+          return;
+        }
       }
       var hasBody = pc && (pc.description || pc.bullets.length || pc.tech.length);
-      var dm = l.match(/\s+[\u2013\u2014]\s+|\s*:\s*/), nm = l, desc = "";
+      var dm = l.match(/\s+[\u2013\u2014]\s+|\s*:\s*/), nm = l, desc = "", extraTech = [];
       if (dm) { nm = l.slice(0, dm.index).trim(); desc = l.slice(dm.index + dm[0].length).trim(); }
+      /* trailing "-- React, Tailwind, Node" is a tech list, not description */
+      var tm2 = desc.match(/\s+[\u2013\u2014]\s+([^\u2013\u2014:;]+)$/);
+      if (tm2 && /,/.test(tm2[1])) {
+        extraTech = tm2[1].split(/[,|]/).map(function (x) { return x.trim(); }).filter(Boolean).slice(0, 12);
+        if (extraTech.length >= 2) desc = desc.slice(0, tm2.index).trim();
+        else extraTech = [];
+      }
       if (!pc || hasBody) {
         pushProj(); pc = newProj(); pc.name = nm; pc.description = desc;
+        if (extraTech.length) pc.tech = extraTech;
       } else if (!pc.name) {
         pc.name = nm; pc.description = desc;
+        if (extraTech.length) pc.tech = extraTech;
       } else {
         pc.description += (pc.description ? " " : "") + l;
       }
@@ -555,10 +650,13 @@
     var skillLines = sectionLines("skills") || [], seen = {};
     skillLines.forEach(function (l) {
       var core = stripBullet(l);
+      if (/^[A-Za-z &\/+]+\s*:\s*$/.test(core)) return;  /* "Category:" label, no items */
       var cm = core.match(/^[A-Za-z &\/+]+\s*:\s*(.+)$/);
       if (cm) core = cm[1];
       core.split(/[,|\u2022\u00b7\/;]/).forEach(function (x) {
-        var s = x.trim().replace(/[.]+$/, "");
+        var s = x.trim()
+          .replace(/^['"\u2018\u2019\u201c\u201d]+|['"\u2018\u2019\u201c\u201d]+$/g, "")
+          .trim().replace(/^(and|or|with|using)\s+/i, "").replace(/[.]+$/, "");
         if (s && s.length < 42 && s.split(/\s+/).length <= 4 && !/[.!?]$/.test(s)) {
           var k = s.toLowerCase();
           if (!seen[k]) { seen[k] = true; r.skills.push(s); }
