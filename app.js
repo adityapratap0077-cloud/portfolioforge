@@ -197,12 +197,16 @@
       .replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "portfolio";
   }
 
-  /* inflate via the platform DecompressionStream: 'deflate' (zlib) or 'deflate-raw' */
+  /* inflate via the platform DecompressionStream: 'deflate' (zlib) or 'deflate-raw'.
+     The readable side MUST be consumed concurrently with write/close — otherwise
+     backpressure deadlocks close() on large streams and the promise never settles
+     (UI stuck on "reading…" forever). */
   function inflateAsync(u8, format) {
     var ds = new DecompressionStream(format);
     var w = ds.writable.getWriter();
+    var out = new Response(ds.readable).arrayBuffer(); /* consume first: lets close() drain */
     return w.write(u8).then(function () { return w.close(); })
-      .then(function () { return new Response(ds.readable).arrayBuffer(); });
+      .then(function () { return out; });
   }
 
   function xmlUnescape(s) {
@@ -1387,7 +1391,15 @@
     $("resume-filename").textContent = (f.name || "file") + " — reading…";
     $("resume-file-row").hidden = false;
     $("resume-generate-btn").disabled = true;
-    readResumeFile(f).then(function (text) {
+    /* safety net: never leave the UI stuck on "reading…" — if the read stalls,
+       bail out with a friendly message instead of hanging forever. */
+    var timedRead = Promise.race([
+      readResumeFile(f),
+      new Promise(function (_, reject) {
+        setTimeout(function () { reject(new Error("timeout")); }, 30000);
+      })
+    ]);
+    timedRead.then(function (text) {
       if (!text || text.trim().length < 40) throw new Error("empty");
       setPendingResume(f.name, text);
     }).catch(function (err) {
@@ -1399,6 +1411,8 @@
         msg += "Please use a PDF, DOCX, TXT or Markdown file.";
       } else if (err && err.message === "empty") {
         msg += "No readable text was found — try a DOCX or TXT version.";
+      } else if (err && err.message === "timeout") {
+        msg = "Reading is taking too long — your file may be very large. Try a smaller file, or a DOCX/TXT version of your resume.";
       } else {
         msg += "Try a DOCX or TXT version of your resume.";
       }
