@@ -15,26 +15,55 @@
 <main id="view-generator" class="view">
   <div class="gen-inner">
     <div class="brand"><span class="brand-mark">◆</span> PortfolioForge</div>
-    <p class="eyebrow">GitHub → Portfolio · in seconds</p>
-    <h1 class="gen-title">Turn any GitHub profile<br>into a <em>luxury</em> portfolio.</h1>
-    <p class="gen-sub">Paste a username. We fetch the public profile, rank the best repositories by stars, and forge a dark, editorial portfolio page — ready to download.</p>
+    <p class="eyebrow">Portfolio · in seconds</p>
+    <h1 class="gen-title">Turn your story<br>into a <em>luxury</em> portfolio.</h1>
+    <p class="gen-sub">Start from a GitHub profile or your resume — we forge a dark, editorial portfolio page, ready to download.</p>
 
-    <form id="gen-form" class="gen-form" autocomplete="off">
-      <div class="input-wrap">
-        <span class="at">@</span>
-        <input id="username-input" type="text" placeholder="github username" spellcheck="false" aria-label="GitHub username">
-      </div>
-      <button type="submit" class="btn-gold">Generate <span aria-hidden="true">→</span></button>
-    </form>
-
-    <div class="chips">
-      <span class="chips-label">Try a demo</span>
-      <button class="chip" data-user="torvalds">torvalds</button>
-      <button class="chip" data-user="sindresorhus">sindresorhus</button>
-      <button class="chip" data-user="gaearon">gaearon</button>
+    <div class="mode-tabs" role="tablist" aria-label="Generation mode">
+      <button id="tab-github" class="tab active" role="tab" aria-selected="true" aria-controls="panel-github" type="button">GitHub</button>
+      <button id="tab-resume" class="tab" role="tab" aria-selected="false" aria-controls="panel-resume" type="button">Resume</button>
     </div>
 
-    <p class="gen-note">No sign-up · No API keys · Only public GitHub data · 100% client-side</p>
+    <div id="panel-github" role="tabpanel" aria-labelledby="tab-github">
+      <form id="gen-form" class="gen-form" autocomplete="off">
+        <div class="input-wrap">
+          <span class="at">@</span>
+          <input id="username-input" type="text" placeholder="github username" spellcheck="false" aria-label="GitHub username">
+        </div>
+        <button type="submit" class="btn-gold">Generate <span aria-hidden="true">→</span></button>
+      </form>
+
+      <div class="chips">
+        <span class="chips-label">Try a demo</span>
+        <button class="chip" data-user="torvalds">torvalds</button>
+        <button class="chip" data-user="sindresorhus">sindresorhus</button>
+        <button class="chip" data-user="gaearon">gaearon</button>
+      </div>
+
+      <p class="gen-note">No sign-up · No API keys · Only public GitHub data · 100% client-side</p>
+    </div>
+
+    <div id="panel-resume" role="tabpanel" aria-labelledby="tab-resume" hidden>
+      <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="Upload your resume file">
+        <p class="dz-title">Drop your resume here</p>
+        <p class="dz-sub">or</p>
+        <button id="resume-pick-btn" class="btn-ghost" type="button">Choose file</button>
+        <input id="resume-file" type="file" accept=".pdf,.docx,.txt,.md" hidden>
+        <p class="dz-formats">PDF · DOCX · TXT · Markdown</p>
+      </div>
+      <p class="privacy-note">🔒 Parsed 100% in your browser — your file never leaves this device.</p>
+      <div id="resume-file-row" class="file-row" hidden>
+        <span id="resume-filename" class="file-name"></span>
+        <button id="resume-clear" class="btn-ghost" type="button" aria-label="Remove file">✕</button>
+      </div>
+      <p id="resume-error" class="resume-error" role="alert" hidden></p>
+      <button id="resume-generate-btn" class="btn-gold" type="button" disabled>Generate portfolio <span aria-hidden="true">→</span></button>
+      <div class="sample-row">
+        <span class="chips-label">No resume handy?</span>
+        <button id="resume-sample-btn" class="chip" type="button">Try a sample resume</button>
+      </div>
+      <p class="gen-note">No sign-up · No uploads · Works fully offline after load</p>
+    </div>
   </div>
 </main>
 
@@ -96,13 +125,13 @@
     </div>
     <nav class="mini-nav" aria-label="Portfolio sections">
       <div class="wrap mini-nav-inner">
-        <a href="#sec-hero">Portrait</a>
-        <a href="#sec-about">About</a>
-        <a href="#sec-work">Work</a>
-        <a href="#sec-activity" data-nav="activity">Activity</a>
-        <a href="#sec-stack" data-nav="stack">Stack</a>
-        <a href="#sec-journey" data-nav="journey">Journey</a>
-        <a href="#sec-contact">Contact</a>
+        <a id="nav-portrait" href="#sec-hero">Portrait</a>
+        <a id="nav-about" href="#sec-about">About</a>
+        <a id="nav-work" href="#sec-work">Work</a>
+        <a id="nav-activity" href="#sec-activity" data-nav="activity">Activity</a>
+        <a id="nav-stack" href="#sec-stack" data-nav="stack">Stack</a>
+        <a id="nav-journey" href="#sec-journey" data-nav="journey">Journey</a>
+        <a id="nav-contact" href="#sec-contact">Contact</a>
       </div>
     </nav>
   </div>
@@ -111,7 +140,8 @@
     <!-- 01 · HERO -->
     <header id="sec-hero" class="hero reveal">
       <canvas id="pf-particles" aria-hidden="true"></canvas>
-      <img id="pf-avatar" class="avatar" data-depth="26" alt="GitHub avatar">
+      <img id="pf-avatar" class="avatar" data-depth="26" alt="Profile photo">
+      <div id="pf-monogram" class="monogram" data-depth="26" aria-hidden="true" hidden></div>
       <div class="hero-text" data-depth="12">
         <p class="sec-eyebrow"><span class="sec-num">01</span> / Portrait</p>
         <h1 id="pf-name" class="pf-name"></h1>
@@ -123,24 +153,24 @@
 
     <!-- 02 · ABOUT -->
     <section id="sec-about" class="reveal">
-      <p class="sec-eyebrow"><span class="sec-num">02</span> / About</p>
-      <h2 class="sec-title">The Developer</h2>
+      <p id="eyebrow-about" class="sec-eyebrow"><span class="sec-num">02</span> / About</p>
+      <h2 id="title-about" class="sec-title">The Developer</h2>
       <div class="hairline"></div>
       <p id="about-bio" class="about-bio dropcap"></p>
       <p id="about-meta" class="about-meta"></p>
       <div class="stats">
-        <div class="stat"><span id="st-repos" class="stat-num"></span><span class="stat-label">Public repos</span></div>
-        <div class="stat"><span id="st-followers" class="stat-num"></span><span class="stat-label">Followers</span></div>
-        <div class="stat"><span id="st-stars" class="stat-num"></span><span class="stat-label">Total stars</span></div>
-        <div class="stat"><span id="st-forks" class="stat-num"></span><span class="stat-label">Total forks</span></div>
-        <div class="stat"><span id="st-years" class="stat-num"></span><span class="stat-label">Years on GitHub</span></div>
+        <div class="stat"><span id="st-repos" class="stat-num"></span><span id="sl-repos" class="stat-label">Public repos</span></div>
+        <div class="stat"><span id="st-followers" class="stat-num"></span><span id="sl-followers" class="stat-label">Followers</span></div>
+        <div class="stat"><span id="st-stars" class="stat-num"></span><span id="sl-stars" class="stat-label">Total stars</span></div>
+        <div class="stat"><span id="st-forks" class="stat-num"></span><span id="sl-forks" class="stat-label">Total forks</span></div>
+        <div class="stat"><span id="st-years" class="stat-num"></span><span id="sl-years" class="stat-label">Years on GitHub</span></div>
       </div>
     </section>
 
     <!-- 03 · SELECTED WORK -->
     <section id="sec-work" class="reveal">
-      <p class="sec-eyebrow"><span class="sec-num">03</span> / Selected Work</p>
-      <h2 class="sec-title">Selected Work <span class="section-note">— top repositories, ranked by stars</span></h2>
+      <p id="eyebrow-work" class="sec-eyebrow"><span class="sec-num">03</span> / Selected Work</p>
+      <h2 id="title-work" class="sec-title">Selected Work <span class="section-note">— top repositories, ranked by stars</span></h2>
       <div class="hairline"></div>
       <p id="work-note" class="inline-note" hidden></p>
       <div id="work-grid" class="work-list"></div>
@@ -148,8 +178,8 @@
 
     <!-- 04 · ACTIVITY -->
     <section id="sec-activity" class="reveal">
-      <p class="sec-eyebrow"><span class="sec-num">04</span> / Activity</p>
-      <h2 class="sec-title">Recent Activity <span class="section-note">— public events</span></h2>
+      <p id="eyebrow-activity" class="sec-eyebrow"><span class="sec-num">04</span> / Activity</p>
+      <h2 id="title-activity" class="sec-title">Recent Activity <span class="section-note">— public events</span></h2>
       <div class="hairline"></div>
       <p id="activity-note" class="inline-note" hidden></p>
       <div id="activity-timeline" class="timeline"></div>
@@ -157,17 +187,18 @@
 
     <!-- 05 · TECH STACK -->
     <section id="sec-stack" class="reveal">
-      <p class="sec-eyebrow"><span class="sec-num">05</span> / Toolbox</p>
-      <h2 class="sec-title">Tech Stack <span class="section-note">— languages by repository</span></h2>
+      <p id="eyebrow-stack" class="sec-eyebrow"><span class="sec-num">05</span> / Toolbox</p>
+      <h2 id="title-stack" class="sec-title">Tech Stack <span class="section-note">— languages by repository</span></h2>
       <div class="hairline"></div>
       <div id="lang-bar" class="lang-bar"></div>
       <div id="lang-legend" class="lang-legend"></div>
+      <div id="skill-groups" class="skill-groups" hidden></div>
     </section>
 
     <!-- 06 · JOURNEY -->
     <section id="sec-journey" class="reveal">
-      <p class="sec-eyebrow"><span class="sec-num">06</span> / Journey</p>
-      <h2 class="sec-title">The Journey</h2>
+      <p id="eyebrow-journey" class="sec-eyebrow"><span class="sec-num">06</span> / Journey</p>
+      <h2 id="title-journey" class="sec-title">The Journey</h2>
       <div class="hairline"></div>
       <ol id="journey-list" class="journey"></ol>
     </section>
@@ -183,7 +214,7 @@
 
     <footer class="pf-footer reveal">
       <div class="footer-rule"></div>
-      <p>Forged with <span class="brand-mark">◆</span> <strong>PortfolioForge</strong> — from public GitHub data.</p>
+      <p id="footer-note">Forged with <span class="brand-mark">◆</span> <strong>PortfolioForge</strong> — from public GitHub data.</p>
     </footer>
   </main>
 
@@ -209,12 +240,29 @@
       <div class="ctl-group">
         <h3>Sections</h3>
         <div id="section-toggles" class="toggles"></div>
-        <p class="ctl-hint">About, Selected Work and Contact are always shown.</p>
+        <p id="sections-hint" class="ctl-hint">About, Selected Work and Contact are always shown.</p>
       </div>
       <div class="ctl-group">
         <h3>Your words</h3>
         <label class="fld"><span>Tagline</span><input id="fld-tagline" type="text" maxlength="140" placeholder="Leave blank to use the GitHub bio"></label>
         <label class="fld"><span>Bio</span><textarea id="fld-bio" rows="4" maxlength="600" placeholder="Leave blank to use the GitHub bio"></textarea></label>
+      </div>
+      <div class="ctl-group">
+        <h3>Profile photo</h3>
+        <div class="photo-row">
+          <img id="photo-preview" class="photo-preview" alt="Photo preview" hidden>
+          <div class="photo-btns">
+            <button id="photo-pick-btn" class="btn-ghost" type="button">Upload photo</button>
+            <button id="photo-remove" class="btn-ghost" type="button" hidden>Remove</button>
+          </div>
+          <input id="photo-input" type="file" accept="image/*" hidden>
+        </div>
+        <div id="shape-options" class="seg" role="group" aria-label="Avatar shape" style="margin-top:14px">
+          <button type="button" data-shape="circle" class="active">Circle</button>
+          <button type="button" data-shape="rounded">Rounded square</button>
+        </div>
+        <p id="photo-hint" class="photo-hint" aria-live="polite"></p>
+        <p class="ctl-hint">Stored only in this browser — your photo never leaves this device. Removed automatically when you generate a new portfolio.</p>
       </div>
       <div class="ctl-group">
         <h3>Motion &amp; depth</h3>
