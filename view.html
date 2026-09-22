@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>PortfolioForge — Turn a GitHub profile or resume into a portfolio</title>
-<meta name="description" content="Paste a GitHub username or drop your resume. Get a crafted, editorial portfolio in seconds — customize it, download it, or save it to your account.">
+<title>Portfolio — PortfolioForge</title>
+<meta name="description" content="A portfolio shared via PortfolioForge.">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -348,6 +348,21 @@
   </div>
 </div>
 
+
+<!-- ══════════ SHARE-LINK ERROR ══════════ -->
+<div id="viewpage-error" class="view" hidden>
+  <div class="wrap">
+    <div class="error-card">
+      <p class="kicker error-eyebrow">Portfolio link</p>
+      <h2 id="viewpage-error-title" class="error-title">Link not found</h2>
+      <p id="viewpage-error-msg" class="error-msg"></p>
+      <div class="error-actions">
+        <a class="btn-primary sm" href="index.html" style="text-decoration:none;display:inline-block">Create your own portfolio</a>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- ══════════ PRIVACY REVIEW MODAL ══════════ -->
 <div id="privacy-modal" class="modal" hidden>
   <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="privacy-title">
@@ -368,6 +383,6 @@
 <script src="supabase-config.js"></script>
 <script src="app.js"></script>
 <script src="js/supabase-client.js"></script>
-<script src="js/backend.js"></script>
+<script src="js/view.js"></script>
 </body>
 </html>
