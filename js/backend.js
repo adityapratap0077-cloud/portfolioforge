@@ -14,6 +14,12 @@
   var currentSavedId = null;   // id of the dashboard entry currently open
   var dashboardOpen = false;
   var authListeners = [];      // fn(signedIn) — notified on every auth state change
+  /* What the user was trying to do when a sign-in gate stopped them:
+     "customize" | "download" | "save". Runs automatically after auth. */
+  var pendingIntent = null;
+  /* localStorage snapshot of the in-memory portfolio, taken before the
+     Google OAuth redirect (which reloads the page and wipes memory). */
+  var POST_AUTH_KEY = "pf:post-auth-resume";
 
   /* ── tiny helpers ── */
   function $(id) { return document.getElementById(id); }
@@ -160,6 +166,9 @@
       if (btn) btn.disabled = true;
       if (label) label.textContent = "Connecting to Google…";
       hideEl("auth-error");
+      /* OAuth leaves the page and comes back via a full reload, wiping the
+         in-memory portfolio — snapshot it so we can restore it on return. */
+      snapshotForOAuth();
       sb.auth.signInWithOAuth({
         provider: "google",
         options: {
@@ -194,6 +203,8 @@
       if (err) { authFail(err.message || "Something went wrong — try again."); return; }
       hideModal("auth-modal");
       PF.toast(authMode === "signin" ? "Signed in" : "Account created — welcome");
+      /* in-page auth (email/password): finish what the gate interrupted */
+      runPendingIntent();
     }
     if (authMode === "signin") {
       sb.auth.signInWithPassword({ email: email, password: password }).then(function (res) { done(res.error); });
@@ -228,6 +239,66 @@
     }, { onConflict: "id" }).then(function () { /* best-effort */ });
   }
 
+  /* ── post-auth continuity ──
+     A gated action (customize / download / save) while signed out opens the
+     auth modal. Email auth completes in-page; Google OAuth reloads the page,
+     so the portfolio snapshot below preserves the in-memory state across it. */
+  function noteGateIntent(intent) { pendingIntent = intent; }
+  function clearPendingIntent() { pendingIntent = null; }
+  function runPendingIntent() {
+    var intent = pendingIntent;
+    pendingIntent = null;
+    if (!intent || !window.PF) return;
+    try {
+      if (intent === "customize" && PF.openDrawer) PF.openDrawer();
+      else if (intent === "download" && PF.downloadHTML) PF.downloadHTML();
+      else if (intent === "save") handleSaveClick();
+    } catch (e) { /* the portfolio view may be gone — stay on whatever is showing */ }
+  }
+  function snapshotForOAuth() {
+    try {
+      if (!window.PF || !PF.getSource) return;
+      var src = PF.getSource();
+      if (!src || !src.type || !src.data) return;
+      var payload = {
+        v: 1,
+        ts: Date.now(),
+        intent: pendingIntent,
+        src: { type: src.type, ref: src.ref, data: src.data },
+        customization: (PF.getCustomization ? PF.getCustomization() : null)
+      };
+      localStorage.setItem(POST_AUTH_KEY, JSON.stringify(payload));
+    } catch (e) { /* quota or serialization — OAuth continues without a snapshot */ }
+  }
+  function takeSnapshot() {
+    var raw = null, st = null;
+    try { raw = localStorage.getItem(POST_AUTH_KEY); } catch (e) {}
+    if (!raw) return null;
+    try { localStorage.removeItem(POST_AUTH_KEY); } catch (e) {}
+    try { st = JSON.parse(raw); } catch (e) { return null; }
+    if (!st || st.v !== 1 || !st.src || !st.src.type || !st.src.data) return null;
+    if (Date.now() - (st.ts || 0) > 2 * 3600 * 1000) return null; /* stale */
+    return st;
+  }
+  /* Rebuild the portfolio view from the pre-OAuth snapshot. The intent is
+     stashed in pendingIntent; it only runs once a session actually exists
+     (see boot below) — cancelling OAuth must not trigger a gated action. */
+  function restorePostAuth() {
+    var st = takeSnapshot();
+    if (!st || !window.PF) return;
+    try {
+      if (PF.setMode) PF.setMode(st.src.type);
+      var ok = PF.setSource(
+        { type: st.src.type, ref: st.src.ref, data: st.src.data },
+        st.customization
+      );
+      if (!ok) return;
+      PF.show("portfolio");
+      window.scrollTo(0, 0);
+      pendingIntent = st.intent || null;
+    } catch (e) { /* leave the generator as-is */ }
+  }
+
   /* ── save flow ── */
   function handleSaveClick() {
     if (!window.PFSB.configured()) {
@@ -237,6 +308,7 @@
     }
     ensureClient(function () {
       if (!user) {
+        pendingIntent = "save";
         openAuth("signup");
         PF.toast("Create a free account to save this portfolio");
         return;
@@ -555,7 +627,7 @@
   PF.on("auth-tab-signin", "click", function () { setAuthMode("signin"); });
   PF.on("auth-tab-signup", "click", function () { setAuthMode("signup"); });
   PF.on("auth-form", "submit", function (ev) { ev.preventDefault(); doAuth(); });
-  PF.on("auth-close", "click", function () { hideModal("auth-modal"); });
+  PF.on("auth-close", "click", function () { hideModal("auth-modal"); clearPendingIntent(); });
   PF.on("auth-google", "click", signInWithGoogle);
   PF.on("auth-google", "click", signInWithGoogle);
   PF.on("auth-google", "click", signInWithGoogle);
@@ -570,11 +642,16 @@
     if (ev.target.closest && ev.target.closest("#dashboard-content [data-act]")) onDashboardClick(ev);
     ["auth-modal", "save-modal"].forEach(function (id) {
       var m = $(id);
-      if (m && !m.hidden && ev.target === m) m.hidden = true;
+      if (m && !m.hidden && ev.target === m) {
+        m.hidden = true;
+        if (id === "auth-modal") clearPendingIntent();
+      }
     });
   });
   document.addEventListener("keydown", function (ev) {
     if (ev.key === "Escape") {
+      var am = $("auth-modal");
+      if (am && !am.hidden) clearPendingIntent();
       hideModal("auth-modal");
       hideModal("save-modal");
       if (window.PF && PF.closeDrawer) PF.closeDrawer();
@@ -586,6 +663,8 @@
     isSignedIn: function () { return !!user; },
     authConfigured: function () { return !!(window.PFSB && window.PFSB.configured()); },
     openAuth: openAuth,
+    noteGateIntent: noteGateIntent,
+    clearPendingIntent: clearPendingIntent,
     onAuthChange: function (fn) {
       if (typeof fn === "function") {
         authListeners.push(fn);
@@ -597,21 +676,51 @@
   try { window.dispatchEvent(new CustomEvent("pf:backend-ready", { detail: window.PFBackend })); }
   catch (e) { try { window.dispatchEvent(new Event("pf:backend-ready")); } catch (e2) {} }
 
+  /* test hook — exposed only when explicitly enabled (never in production use) */
+  if (typeof window !== "undefined" && window.__PF_TEST__) {
+    window.__PF_TEST_BACKEND__ = {
+      noteGateIntent: noteGateIntent,
+      clearPendingIntent: clearPendingIntent,
+      runPendingIntent: runPendingIntent,
+      snapshotForOAuth: snapshotForOAuth,
+      restorePostAuth: restorePostAuth,
+      takeSnapshot: takeSnapshot,
+      getPendingIntent: function () { return pendingIntent; }
+    };
+  }
+
   /* boot */
   renderAuthArea();
   checkOAuthCallback();
+  /* OAuth return (success, error or cancel): the page reloaded, so rebuild
+     the portfolio the user had generated before leaving for Google. The
+     snapshot is consumed here; the stashed intent only fires below, once a
+     real session exists. */
+  restorePostAuth();
   window.PFSB.ensure().then(function (c) {
     sb = c;
     if (!c) return;
     sb.auth.getSession().then(function (res) {
       user = (res.data && res.data.session && res.data.session.user) || null;
       renderAuthArea();
-      if (user) ensureProfile(user);
+      if (user) {
+        ensureProfile(user);
+        /* successful OAuth return: finish the gated action (customize /
+           download / save) the user started before signing in. */
+        if (pendingIntent) {
+          runPendingIntent();
+          PF.toast("Welcome back — your portfolio is right where you left it");
+        }
+      }
     });
     sb.auth.onAuthStateChange(function (ev, session) {
       user = (session && session.user) || null;
       renderAuthArea();
-      if (user && (ev === "SIGNED_IN" || ev === "TOKEN_REFRESHED")) ensureProfile(user);
+      if (user && (ev === "SIGNED_IN" || ev === "TOKEN_REFRESHED")) {
+        ensureProfile(user);
+        /* idempotent: already consumed by getSession or in-page done() */
+        if (ev === "SIGNED_IN") runPendingIntent();
+      }
       if (dashboardOpen) renderDashboard();
     });
   }).catch(function () { /* offline / blocked CDN — generator unaffected */ });

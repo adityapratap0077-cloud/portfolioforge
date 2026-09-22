@@ -19,6 +19,9 @@
   --serif: "Fraunces", "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, "Times New Roman", serif;
   --sans: "Space Grotesk", -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, "Helvetica Neue", Arial, sans-serif;
   --mono: "IBM Plex Mono", ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+  --inter: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --literary: "DM Serif Display", "Iowan Old Style", Didot, "Bodoni MT", Georgia, "Times New Roman", serif;
+  --brutal: "Archivo Black", "Arial Black", "Franklin Gothic Heavy", "Segoe UI", sans-serif;
 }
 
 * { box-sizing: border-box; }
@@ -492,8 +495,104 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
   --line: #DED3B8; --line-soft: #E7DDC4;
   --accent: #5F6B3C; --accent-2: #46522A;
 }
-#view-portfolio[data-font="modern"] { --font-display: var(--sans); }
-#view-portfolio[data-font="mono"] { --font-display: var(--mono); }
+#view-portfolio[data-theme="ocean"] {
+  --bg: #0B1A21; --bg-2: #0F2129; --surface: #12262E;
+  --ink: #DCE9EC; --muted: #8AA5AD; --faint: #556E76;
+  --line: #1E323B; --line-soft: #1A2C34;
+  --accent: #6FB3C9; --accent-2: #9FD4E4;
+}
+#view-portfolio[data-theme="ultraviolet"] {
+  --bg: #150F24; --bg-2: #1A132C; --surface: #1E1732;
+  --ink: #E6DFF2; --muted: #A393C4; --faint: #6B5C8A;
+  --line: #2B2140; --line-soft: #251D38;
+  --accent: #B79CED; --accent-2: #D3BFF5;
+}
+#view-portfolio[data-theme="rose"] {
+  --bg: #FAF3F0; --bg-2: #F5E9E4; --surface: #FFFFFF;
+  --ink: #2A1E1C; --muted: #7A635F; --faint: #B39A94;
+  --line: #EAD5CC; --line-soft: #F0E0D8;
+  --accent: #C2486B; --accent-2: #9C3353;
+}
+#view-portfolio[data-theme="mint"] {
+  --bg: #F2F7F2; --bg-2: #E7F0E7; --surface: #FFFFFF;
+  --ink: #1E2A22; --muted: #5F7268; --faint: #9DB3A6;
+  --line: #D5E2D5; --line-soft: #E0EAE0;
+  --accent: #2E7D5B; --accent-2: #1F5C42;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   APP CHROME follows the portfolio theme.
+   applyCustomize() mirrors the theme onto body[data-theme]; show()
+   clears it when leaving the portfolio view. The portfolio re-asserts
+   the same values on #view-portfolio, so only the header, auth modal
+   and toast visibly change.
+   ═══════════════════════════════════════════════════════════════ */
+body[data-theme="paper"] {
+  --paper: #FBF8F1; --paper-2: #F4EEE1; --card: #FFFFFF;
+  --ink: #211B13; --muted: #6E6355; --faint: #AC9E86;
+  --line: #E5D9C1; --line-soft: #EFE7D4;
+  --accent: #B4431F; --accent-deep: #8C3215; --accent-soft: #F6E7DA;
+}
+body[data-theme="ink"] {
+  --paper: #15120E; --paper-2: #1B1712; --card: #1E1A15;
+  --ink: #ECE4D2; --muted: #A89A82; --faint: #6E6355;
+  --line: #2E2820; --line-soft: #262019;
+  --accent: #C99B4A; --accent-deep: #E4C57E; --accent-soft: #1B1712;
+}
+body[data-theme="moss"] {
+  --paper: #0F130E; --paper-2: #141A13; --card: #171E16;
+  --ink: #E3E8DA; --muted: #9AA48D; --faint: #626B58;
+  --line: #262E24; --line-soft: #20271E;
+  --accent: #9DB489; --accent-deep: #C2D4B2; --accent-soft: #141A13;
+}
+body[data-theme="clay"] {
+  --paper: #140E0C; --paper-2: #1A1311; --card: #1E1614;
+  --ink: #EDDFD0; --muted: #A89280; --faint: #6E5C4E;
+  --line: #2D231E; --line-soft: #271E19;
+  --accent: #C9703F; --accent-deep: #E09A68; --accent-soft: #1A1311;
+}
+body[data-theme="slate"] {
+  --paper: #101315; --paper-2: #151A1D; --card: #181E21;
+  --ink: #DEE4E6; --muted: #93A0A6; --faint: #5F6B71;
+  --line: #252D31; --line-soft: #20272B;
+  --accent: #7FA3B5; --accent-deep: #A9C6D4; --accent-soft: #151A1D;
+}
+body[data-theme="bone"] {
+  --paper: #F4F0E4; --paper-2: #ECE6D3; --card: #FCFAF2;
+  --ink: #23201A; --muted: #6B6353; --faint: #A39A82;
+  --line: #DED3B8; --line-soft: #E7DDC4;
+  --accent: #5F6B3C; --accent-deep: #46522A; --accent-soft: #ECE6D3;
+}
+body[data-theme="ocean"] {
+  --paper: #0B1A21; --paper-2: #0F2129; --card: #12262E;
+  --ink: #DCE9EC; --muted: #8AA5AD; --faint: #556E76;
+  --line: #1E323B; --line-soft: #1A2C34;
+  --accent: #6FB3C9; --accent-deep: #9FD4E4; --accent-soft: #0F2129;
+}
+body[data-theme="ultraviolet"] {
+  --paper: #150F24; --paper-2: #1A132C; --card: #1E1732;
+  --ink: #E6DFF2; --muted: #A393C4; --faint: #6B5C8A;
+  --line: #2B2140; --line-soft: #251D38;
+  --accent: #B79CED; --accent-deep: #D3BFF5; --accent-soft: #1A132C;
+}
+body[data-theme="rose"] {
+  --paper: #FAF3F0; --paper-2: #F5E9E4; --card: #FFFFFF;
+  --ink: #2A1E1C; --muted: #7A635F; --faint: #B39A94;
+  --line: #EAD5CC; --line-soft: #F0E0D8;
+  --accent: #C2486B; --accent-deep: #9C3353; --accent-soft: #F5E9E4;
+}
+body[data-theme="mint"] {
+  --paper: #F2F7F2; --paper-2: #E7F0E7; --card: #FFFFFF;
+  --ink: #1E2A22; --muted: #5F7268; --faint: #9DB3A6;
+  --line: #D5E2D5; --line-soft: #E0EAE0;
+  --accent: #2E7D5B; --accent-deep: #1F5C42; --accent-soft: #E7F0E7;
+}
+#view-portfolio[data-font="editorial"] { --font-display: var(--serif); --font-body: var(--sans); }
+#view-portfolio[data-font="modern"] { --font-display: var(--sans); --font-body: var(--sans); }
+#view-portfolio[data-font="mono"] { --font-display: var(--mono); --font-body: var(--sans); }
+#view-portfolio[data-font="literary"] { --font-display: var(--literary); --font-body: var(--inter); }
+#view-portfolio[data-font="brutalist"] { --font-display: var(--brutal); --font-body: var(--sans); }
+#view-portfolio[data-font="minimal"] { --font-display: var(--inter); --font-body: var(--inter); }
 #view-portfolio[data-density="compact"] .portfolio section { margin-bottom: 56px; }
 #view-portfolio[data-density="compact"] .hero { margin-bottom: 48px; }
 #view-portfolio[data-density="compact"] .marquee { margin-bottom: 56px; }
@@ -910,10 +1009,17 @@ button:disabled { opacity: 0.45; cursor: not-allowed; }
 #view-portfolio[data-theme="moss"] .swatch[data-theme-key="moss"],
 #view-portfolio[data-theme="clay"] .swatch[data-theme-key="clay"],
 #view-portfolio[data-theme="slate"] .swatch[data-theme-key="slate"],
-#view-portfolio[data-theme="bone"] .swatch[data-theme-key="bone"] { border-color: var(--accent); }
+#view-portfolio[data-theme="bone"] .swatch[data-theme-key="bone"],
+#view-portfolio[data-theme="ocean"] .swatch[data-theme-key="ocean"],
+#view-portfolio[data-theme="ultraviolet"] .swatch[data-theme-key="ultraviolet"],
+#view-portfolio[data-theme="rose"] .swatch[data-theme-key="rose"],
+#view-portfolio[data-theme="mint"] .swatch[data-theme-key="mint"] { border-color: var(--accent); }
 #view-portfolio[data-font="editorial"] .font-opt[data-font-key="editorial"],
 #view-portfolio[data-font="modern"] .font-opt[data-font-key="modern"],
-#view-portfolio[data-font="mono"] .font-opt[data-font-key="mono"] { border-color: var(--accent); }
+#view-portfolio[data-font="mono"] .font-opt[data-font-key="mono"],
+#view-portfolio[data-font="literary"] .font-opt[data-font-key="literary"],
+#view-portfolio[data-font="brutalist"] .font-opt[data-font-key="brutalist"],
+#view-portfolio[data-font="minimal"] .font-opt[data-font-key="minimal"] { border-color: var(--accent); }
 #view-portfolio[data-density="comfortable"] #density-options [data-density="comfortable"],
 #view-portfolio[data-density="compact"] #density-options [data-density="compact"] { background: var(--ink); color: var(--bg); }
 #view-portfolio[data-shape="circle"] #shape-options [data-shape="circle"],

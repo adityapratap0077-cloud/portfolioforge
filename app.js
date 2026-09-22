@@ -37,20 +37,49 @@
       accent: "#5F6B3C", accent2: "#46522A", bg: "#F4F0E4",
       vars: { bg: "#F4F0E4", bg2: "#ECE6D3", surface: "#FCFAF2", ink: "#23201A",
               muted: "#6B6353", faint: "#A39A82", accent: "#5F6B3C", accent2: "#46522A", line: "#DED3B8", lineSoft: "#E7DDC4",
-              rgb: [95, 107, 60] } }
+              rgb: [95, 107, 60] } },
+    { key: "ocean", name: "Ocean",
+      accent: "#6FB3C9", accent2: "#9FD4E4", bg: "#0B1A21",
+      vars: { bg: "#0B1A21", bg2: "#0F2129", surface: "#12262E", ink: "#DCE9EC",
+              muted: "#8AA5AD", faint: "#556E76", accent: "#6FB3C9", accent2: "#9FD4E4", line: "#1E323B", lineSoft: "#1A2C34",
+              rgb: [111, 179, 201] } },
+    { key: "ultraviolet", name: "Ultraviolet",
+      accent: "#B79CED", accent2: "#D3BFF5", bg: "#150F24",
+      vars: { bg: "#150F24", bg2: "#1A132C", surface: "#1E1732", ink: "#E6DFF2",
+              muted: "#A393C4", faint: "#6B5C8A", accent: "#B79CED", accent2: "#D3BFF5", line: "#2B2140", lineSoft: "#251D38",
+              rgb: [183, 156, 237] } },
+    { key: "rose", name: "Rose",
+      accent: "#C2486B", accent2: "#9C3353", bg: "#FAF3F0",
+      vars: { bg: "#FAF3F0", bg2: "#F5E9E4", surface: "#FFFFFF", ink: "#2A1E1C",
+              muted: "#7A635F", faint: "#B39A94", accent: "#C2486B", accent2: "#9C3353", line: "#EAD5CC", lineSoft: "#F0E0D8",
+              rgb: [194, 72, 107] } },
+    { key: "mint", name: "Mint",
+      accent: "#2E7D5B", accent2: "#1F5C42", bg: "#F2F7F2",
+      vars: { bg: "#F2F7F2", bg2: "#E7F0E7", surface: "#FFFFFF", ink: "#1E2A22",
+              muted: "#5F7268", faint: "#9DB3A6", accent: "#2E7D5B", accent2: "#1F5C42", line: "#D5E2D5", lineSoft: "#E0EAE0",
+              rgb: [46, 125, 91] } }
   ];
 
-  /* ── typography: 3 pairings (Google Fonts, offline-safe fallbacks) ── */
+  /* ── typography: 6 pairings (Google Fonts, offline-safe fallbacks) ── */
   var SANS_STACK = '"Space Grotesk",-apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,"Helvetica Neue",Arial,sans-serif';
   var SERIF_STACK = '"Fraunces","Didot","Bodoni MT",Georgia,"Times New Roman",serif';
   var MONO_STACK = '"IBM Plex Mono",ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace';
+  var INTER_STACK = '"Inter",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif';
+  var LITERARY_STACK = '"DM Serif Display","Didot","Bodoni MT",Georgia,"Times New Roman",serif';
+  var BRUTAL_STACK = '"Archivo Black","Arial Black","Franklin Gothic Heavy",sans-serif';
   var FONTS = [
     { key: "editorial", name: "Editorial", hint: "Serif display · Grotesk body",
       display: SERIF_STACK, body: SANS_STACK },
     { key: "modern", name: "Modern", hint: "Grotesk display · Grotesk body",
       display: SANS_STACK, body: SANS_STACK },
     { key: "mono", name: "Mono", hint: "Monospace display · Grotesk body",
-      display: MONO_STACK, body: SANS_STACK }
+      display: MONO_STACK, body: SANS_STACK },
+    { key: "literary", name: "Literary", hint: "Classic serif · Inter body",
+      display: LITERARY_STACK, body: INTER_STACK },
+    { key: "brutalist", name: "Brutalist", hint: "Heavy display · Grotesk body",
+      display: BRUTAL_STACK, body: SANS_STACK },
+    { key: "minimal", name: "Minimal", hint: "Inter display · Inter body",
+      display: INTER_STACK, body: INTER_STACK }
   ];
 
   function themeByKey(k) {
@@ -138,7 +167,8 @@
       return { id: r.id, name: r.name, full_name: r.full_name, html_url: r.html_url,
         description: r.description, language: r.language, topics: r.topics || [],
         stargazers_count: r.stargazers_count, forks_count: r.forks_count,
-        updated_at: r.updated_at, created_at: r.created_at, fork: !!r.fork };
+        updated_at: r.updated_at, created_at: r.created_at, fork: !!r.fork,
+        owner: (r.owner && r.owner.login) ? { login: r.owner.login } : null };
     }
     return {
       user: d.user,
@@ -822,7 +852,11 @@
     window.scrollTo(0, 0);
     if (name === "generator") syncTabs();
     if (name === "portfolio") { initMotion(); }
-    else { clearMotion(); views.portfolio.classList.remove("motion-on"); }
+    else {
+      clearMotion(); views.portfolio.classList.remove("motion-on");
+      /* portfolio theme no longer applies — restore default app chrome */
+      document.body.removeAttribute("data-theme");
+    }
   }
 
   function esc(s) {
@@ -965,6 +999,9 @@
     return function (ev) {
       var be = backend();
       if (be && be.authConfigured && be.authConfigured() && !be.isSignedIn()) {
+        /* remember what the user was trying to do — after they sign in
+           (in-page or via OAuth) we finish that action for them */
+        if (be.noteGateIntent) be.noteGateIntent(what.indexOf("customize") >= 0 ? "customize" : "download");
         toast("Sign in to " + what + " — it's free");
         be.openAuth("signin");
         return;
@@ -1774,6 +1811,9 @@
     vp.setAttribute("data-theme", cust.theme);
     vp.setAttribute("data-font", cust.font);
     vp.setAttribute("data-density", cust.density);
+    /* mirror the theme onto <body> so the site header, auth modal and
+       toast follow the portfolio theme while it is visible */
+    document.body.setAttribute("data-theme", cust.theme);
     /* sections + nav labels, per mode */
     MODE_SECTIONS[mode].forEach(function (sd) {
       var secEl = $(sd.sec);
@@ -2340,7 +2380,7 @@
       "<title>" + esc(name) + " — Portfolio</title>\n" +
       '<link rel="preconnect" href="https://fonts.googleapis.com">\n' +
       '<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>\n' +
-      '<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">\n' +
+      '<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600;700&family=DM+Serif+Display:ital@0;1&family=Archivo+Black&display=swap" rel="stylesheet">\n' +
       "<style>\n" + exportCSS() + "\n</style>\n</head>\n<body>\n" +
       '<div class="grain" aria-hidden="true"></div>\n' +
       '<main class="pf">\n' + main.innerHTML + "\n</main>\n" + script + "</body>\n</html>";
