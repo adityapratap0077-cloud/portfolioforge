@@ -949,6 +949,33 @@
     }, 2600);
   }
 
+  /* ── sign-in gate for Customize / Download HTML ── */
+  function backend() { return (typeof window !== "undefined") ? window.PFBackend || null : null; }
+  function authGateActive() {
+    var be = backend();
+    return !!(be && be.authConfigured && be.authConfigured() && !be.isSignedIn());
+  }
+  function requireAuth(what, fn) {
+    return function (ev) {
+      var be = backend();
+      if (be && be.authConfigured && be.authConfigured() && !be.isSignedIn()) {
+        toast("Sign in to " + what + " — it's free");
+        be.openAuth("signin");
+        return;
+      }
+      return fn.call(this, ev);
+    };
+  }
+  function refreshGatedButtons() {
+    var locked = authGateActive();
+    ["customize-btn", "download-btn"].forEach(function (id) {
+      var b = $(id);
+      if (!b) return;
+      b.classList.toggle("locked", locked);
+      b.title = locked ? "Sign in to unlock" : "";
+    });
+  }
+
   /* ── start over: back to a clean generator ── */
   function startOver() {
     currentSource = null;
@@ -2338,7 +2365,7 @@
   $("retry-btn").addEventListener("click", function () { generate(lastUsername); });
   $("error-back-btn").addEventListener("click", function () { show("generator"); });
   $("startover-btn").addEventListener("click", startOver);
-  $("download-btn").addEventListener("click", downloadHTML);
+  $("download-btn").addEventListener("click", requireAuth("download the HTML", downloadHTML));
 
   /* mode tabs */
   $("tab-github").addEventListener("click", function () { setMode("github"); });
@@ -2385,7 +2412,7 @@
   $("privacy-none").addEventListener("click", function () { setAllPrivacy(false); });
   $("privacy-back").addEventListener("click", function () { hidePrivacyModal(); show("generator"); });
 
-  $("customize-btn").addEventListener("click", openDrawer);
+  $("customize-btn").addEventListener("click", requireAuth("customize this portfolio", openDrawer));
   $("drawer-close").addEventListener("click", closeDrawer);
   $("drawer-scrim").addEventListener("click", closeDrawer);
   document.addEventListener("keydown", function (e) {
@@ -2395,6 +2422,19 @@
   /* init */
   buildPanel();
   applyCustomize();
+  refreshGatedButtons();
+  function wireBackend() {
+    var b = backend();
+    if (b && b.onAuthChange) { b.onAuthChange(function () { refreshGatedButtons(); }); return true; }
+    return false;
+  }
+  /* backend.js loads after app.js — subscribe now or when it signals readiness */
+  if (!wireBackend() && typeof window !== "undefined") {
+    window.addEventListener("pf:backend-ready", function h() {
+      window.removeEventListener("pf:backend-ready", h);
+      wireBackend();
+    });
+  }
 
   /* public API — used by backend.js for save/share/dashboard auth UI */
   if (typeof window !== "undefined") {

@@ -13,6 +13,7 @@
   var authMode = "signin";
   var currentSavedId = null;   // id of the dashboard entry currently open
   var dashboardOpen = false;
+  var authListeners = [];      // fn(signedIn) — notified on every auth state change
 
   /* ── tiny helpers ── */
   function $(id) { return document.getElementById(id); }
@@ -101,6 +102,9 @@
       area.appendChild(inBtn);
       area.appendChild(upBtn);
     }
+    /* notify gated-action listeners of the current auth state */
+    var signed = !!user;
+    authListeners.forEach(function (fn) { try { fn(signed); } catch (e) {} });
   }
 
   /* ── auth modal ── */
@@ -576,6 +580,22 @@
       if (window.PF && PF.closeDrawer) PF.closeDrawer();
     }
   });
+
+  /* public auth API — page scripts use this to gate actions behind sign-in */
+  window.PFBackend = {
+    isSignedIn: function () { return !!user; },
+    authConfigured: function () { return !!(window.PFSB && window.PFSB.configured()); },
+    openAuth: openAuth,
+    onAuthChange: function (fn) {
+      if (typeof fn === "function") {
+        authListeners.push(fn);
+        try { fn(!!user); } catch (e) {}
+      }
+    }
+  };
+  /* signal readiness — app.js loads before this file, so it subscribes on this event */
+  try { window.dispatchEvent(new CustomEvent("pf:backend-ready", { detail: window.PFBackend })); }
+  catch (e) { try { window.dispatchEvent(new Event("pf:backend-ready")); } catch (e2) {} }
 
   /* boot */
   renderAuthArea();
