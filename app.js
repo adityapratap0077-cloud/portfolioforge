@@ -109,6 +109,12 @@
         for (k in def) c.sections[k] = !(p.sections && p.sections[k] === false);
       }
     } catch (e) { /* storage unavailable — use defaults */ }
+    /* validate saved keys — an old/unknown theme (e.g. "ivory" from v3) must not
+       leave data-theme unmatched, or theme vars go undefined and UI goes transparent */
+    var themeOK = THEMES.some(function (t) { return t.key === c.theme; });
+    if (!themeOK) c.theme = "paper";
+    var fontOK = FONTS.some(function (f) { return f.key === c.font; });
+    if (!fontOK) c.font = "editorial";
     return c;
   }
   var cust = loadCust();
