@@ -5,9 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Portfolio — PortfolioForge</title>
 <meta name="description" content="A portfolio shared via PortfolioForge.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
+<div class="grain" aria-hidden="true"></div>
 
 <header class="site-header">
   <div class="wrap header-inner">
@@ -172,16 +176,30 @@
   <main class="wrap portfolio">
     <!-- 01 · HERO -->
     <header id="sec-hero" class="hero reveal">
-      <img id="pf-avatar" class="avatar" alt="Profile photo">
-      <div id="pf-monogram" class="monogram" aria-hidden="true" hidden></div>
-      <div class="hero-text">
+      <div class="hero-top">
         <p class="sec-eyebrow"><span class="sec-num">01</span> / Portrait</p>
-        <h1 id="pf-name" class="pf-name"></h1>
-        <p id="pf-tagline" class="pf-tagline"></p>
+        <p class="hero-status" id="pf-status"><span class="status-dot" aria-hidden="true"></span>Open for work</p>
+      </div>
+      <div class="hero-grid">
+        <div class="hero-text">
+          <h1 id="pf-name" class="pf-name"></h1>
+          <p id="pf-tagline" class="pf-tagline"></p>
+        </div>
+        <figure class="hero-figure">
+          <span class="figure-frame">
+            <img id="pf-avatar" class="avatar" alt="Profile photo">
+            <span id="pf-monogram" class="monogram" aria-hidden="true" hidden></span>
+          </span>
+          <figcaption><span>fig. 01</span> — the developer</figcaption>
+        </figure>
+      </div>
+      <div class="hero-foot">
         <p class="pf-meta"><span id="pf-location"></span><span id="pf-meta-sep"> · </span><a id="pf-github" target="_blank" rel="noopener"></a></p>
         <a href="#sec-about" class="scroll-cue" aria-label="Scroll to about section"><span></span>Scroll</a>
       </div>
     </header>
+
+    <div class="marquee reveal" aria-hidden="true"><div class="marquee-track"><span>Designed with care</span><i>◆</i><span>Open source</span><i>◆</i><span>Built to last</span><i>◆</i><span>Designed with care</span><i>◆</i><span>Open source</span><i>◆</i><span>Built to last</span><i>◆</i></div></div>
 
     <!-- 02 · ABOUT -->
     <section id="sec-about" class="reveal">
@@ -246,6 +264,7 @@
 
     <footer class="pf-footer reveal">
       <div class="footer-rule"></div>
+      <p class="colophon">Set in Fraunces &amp; Space Grotesk — composed by PortfolioForge</p>
       <p id="footer-note">Forged with <strong>PortfolioForge</strong> — from public GitHub data.</p>
     </footer>
   </main>
