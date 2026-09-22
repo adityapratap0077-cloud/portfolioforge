@@ -129,6 +129,54 @@
     var e = $("auth-error");
     if (e) { e.textContent = msg; e.hidden = false; }
   }
+  /* OAuth redirect target: this exact page, no query/hash — must be an
+   * allowed redirect URL in Supabase. Same value works on localhost and
+   * in production, since it is derived from the page that was opened. */
+  function oauthRedirectTo() {
+    return window.location.href.split(/[?#]/)[0];
+  }
+  /* Surface OAuth callback failures (e.g. provider denied, misconfigured
+   * redirect URL) as a readable message inside the auth modal. */
+  function checkOAuthCallback() {
+    var q = window.location.search || "";
+    var m = q.match(/[?&]error(?:_description)?=([^&]*)/);
+    if (!m) return;
+    var raw = "";
+    try { raw = decodeURIComponent(m[1]).replace(/\+/g, " "); } catch (e) { raw = m[1]; }
+    var msg = raw || "Google sign-in didn't complete.";
+    if (/access_denied/i.test(raw)) msg = "Google sign-in was cancelled — try again when you're ready.";
+    openAuth("signin");
+    authFail(msg);
+    /* strip the error params so a refresh doesn't re-show them */
+    try { window.history.replaceState({}, document.title, oauthRedirectTo()); } catch (e) {}
+  }
+  function signInWithGoogle() {
+    var btn = $("auth-google"), label = $("auth-google-label");
+    ensureClient(function () {
+      if (btn) btn.disabled = true;
+      if (label) label.textContent = "Connecting to Google…";
+      hideEl("auth-error");
+      sb.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: oauthRedirectTo(),
+          queryParams: { prompt: "select_account" }
+        }
+      }).then(function (res) {
+        if (res.error) {
+          if (btn) btn.disabled = false;
+          if (label) label.textContent = "Continue with Google";
+          authFail(res.error.message || "Google sign-in failed — try again.");
+        }
+        /* success → the browser leaves for Google; Supabase handles the
+         * callback and onAuthStateChange picks up the session on return */
+      }).catch(function (err) {
+        if (btn) btn.disabled = false;
+        if (label) label.textContent = "Continue with Google";
+        authFail((err && err.message) || "Google sign-in failed — try again.");
+      });
+    });
+  }
   function doAuth() {
     var email = $("auth-email").value.trim();
     var password = $("auth-password").value;
@@ -504,6 +552,9 @@
   PF.on("auth-tab-signup", "click", function () { setAuthMode("signup"); });
   PF.on("auth-form", "submit", function (ev) { ev.preventDefault(); doAuth(); });
   PF.on("auth-close", "click", function () { hideModal("auth-modal"); });
+  PF.on("auth-google", "click", signInWithGoogle);
+  PF.on("auth-google", "click", signInWithGoogle);
+  PF.on("auth-google", "click", signInWithGoogle);
 
   PF.on("gen-form", "submit", resetSaved);
   PF.on("resume-generate-btn", "click", resetSaved);
@@ -528,6 +579,7 @@
 
   /* boot */
   renderAuthArea();
+  checkOAuthCallback();
   window.PFSB.ensure().then(function (c) {
     sb = c;
     if (!c) return;

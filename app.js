@@ -809,7 +809,6 @@
   var lastUsername = "";
 
   var REDUCED = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
-  var FINE_POINTER = !!(window.matchMedia && window.matchMedia("(hover: hover) and (pointer: fine)").matches);
 
   function show(name) {
     Object.keys(views).forEach(function (k) { views[k].hidden = (k !== name); });
@@ -1907,7 +1906,7 @@
   }
 
   /* ═══════════════ subtle motion ═══════════════
-     Scroll reveals + gentle card tilt only. No particles, no parallax, no orbs. */
+     Scroll reveals only. No particles, no parallax, no orbs, no card tilt. */
   var motionCleanup = [];
 
   function clearMotion() {
@@ -1926,7 +1925,6 @@
     vp.classList.add("motion-on");
     vp.classList.remove("motion-off");
     initReveals(vp);
-    if (FINE_POINTER) initTilt(vp);
   }
 
   function initReveals(vp) {
@@ -1947,31 +1945,6 @@
     }, { threshold: 0.08, rootMargin: "0px 0px -6% 0px" });
     for (var j = 0; j < reveals.length; j++) io.observe(reveals[j]);
     motionCleanup.push(function () { io.disconnect(); });
-  }
-
-  function initTilt(vp) {
-    var cards = vp.querySelectorAll(".work-card");
-    for (var i = 0; i < cards.length; i++) {
-      (function (card) {
-        function mv(ev) {
-          var r = card.getBoundingClientRect();
-          var px = (ev.clientX - r.left) / r.width - 0.5;
-          var py = (ev.clientY - r.top) / r.height - 0.5;
-          card.classList.add("tilting");
-          card.style.transform = "perspective(1200px) rotateX(" + (-py * 3).toFixed(2) +
-            "deg) rotateY(" + (px * 4).toFixed(2) + "deg)";
-        }
-        function lv() { card.classList.remove("tilting"); card.style.transform = ""; }
-        card.addEventListener("mousemove", mv);
-        card.addEventListener("mouseleave", lv);
-        motionCleanup.push(function () {
-          card.removeEventListener("mousemove", mv);
-          card.removeEventListener("mouseleave", lv);
-          card.classList.remove("tilting");
-          card.style.transform = "";
-        });
-      })(cards[i]);
-    }
   }
 
   /* ── render ── */
@@ -2142,7 +2115,8 @@
     var R = [
       "html{scroll-behavior:smooth}",
       "body{background:var(--bg);color:var(--ink);font-family:var(--font-body);margin:0;padding:0;-webkit-font-smoothing:antialiased}",
-      ".pf{padding:72px 28px 40px;max-width:920px;margin:0 auto}",
+      ".pf{padding:72px 28px 40px;max-width:920px;margin:0 auto;overflow-wrap:break-word}",
+      ".pf a,.pf .work-name,.pf .topic-tag,.pf .t-text,.pf .about-meta,.pf .pf-meta,.pf .j-detail,.pf .skill-chip,.pf .social-chip,.pf .work-desc{overflow-wrap:anywhere;word-break:break-word}",
       ".pf section{margin-bottom:104px}",
       ".sec-eyebrow{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;letter-spacing:.28em;text-transform:uppercase;color:var(--muted);margin:0 0 18px}",
       ".sec-num{color:var(--accent)}",
@@ -2159,7 +2133,7 @@
       ".pf-meta a{color:var(--accent);text-decoration:none}",
       ".scroll-cue{display:none}",
       ".about-bio{font-size:17.5px;line-height:1.85;max-width:700px;margin:0 0 24px}",
-      ".dropcap::first-letter{font-family:var(--font-display);font-weight:600;font-size:3.2em;line-height:.85;float:left;padding:6px 10px 0 0;color:var(--accent)}",
+      ".dropcap::first-letter{font-family:var(--font-display);font-weight:600;font-size:2.9em;line-height:.82;float:left;padding:5px 8px 0 0;margin:0;color:var(--accent)}",
       ".about-meta{font-size:13.5px;color:var(--muted);margin:0 0 56px;line-height:2}",
       ".about-meta a{color:var(--accent);text-decoration:none}",
       ".stats{display:grid;grid-template-columns:repeat(5,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden}",
@@ -2167,9 +2141,8 @@
       ".stat-num{display:block;font-family:var(--font-display);font-size:2.1rem;font-weight:600;margin-bottom:6px}",
       ".stat-label{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px;letter-spacing:.2em;text-transform:uppercase;color:var(--muted)}",
       ".work-list{display:flex;flex-direction:column}",
-      ".work-card{display:grid;grid-template-columns:88px 1fr;gap:32px;padding:40px 0;border-bottom:1px solid var(--line-soft);transition:transform .4s cubic-bezier(.22,1,.36,1)}",
+      ".work-card{display:grid;grid-template-columns:88px 1fr;gap:32px;padding:40px 0;border-bottom:1px solid var(--line-soft)}",
       ".work-card:first-child{border-top:1px solid var(--line-soft)}",
-      ".work-card.tilting{transition-duration:.08s}",
       ".work-index{font-family:var(--font-display);font-weight:600;font-size:2.6rem;line-height:1;color:var(--line)}",
       ".work-body{min-width:0}",
       ".work-kicker{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;margin-bottom:12px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--faint)}",
@@ -2220,7 +2193,8 @@
       ".motion-on .reveal{opacity:0;transform:translateY(18px);transition:opacity .6s ease,transform .65s cubic-bezier(.22,1,.36,1)}",
       ".motion-on .reveal.in{opacity:1;transform:translateY(0)}",
       "@media(max-width:900px){.stats{grid-template-columns:repeat(3,1fr)}.work-card{grid-template-columns:64px 1fr;gap:20px}}",
-      "@media(max-width:640px){.hero{flex-direction:column;align-items:flex-start;gap:32px}.stats{grid-template-columns:repeat(2,1fr)}.work-card{grid-template-columns:1fr;gap:12px;padding:32px 0}.work-index{font-size:2rem}.journey li{grid-template-columns:1fr;gap:6px}.pf{padding-top:48px}.pf section{margin-bottom:72px}.skill-groups{grid-template-columns:1fr}}",
+      "@media(max-width:640px){.hero{flex-direction:column;align-items:flex-start;gap:32px;margin:48px 0 72px}.avatar,.monogram{width:112px;height:112px}.pf{padding:48px 20px 40px}.pf section{margin-bottom:72px}.stats{grid-template-columns:repeat(2,1fr)}.stat{padding:20px 12px}.stat:last-child:nth-child(odd){grid-column:span 2}.stat-num{font-size:1.7rem}.work-card{grid-template-columns:1fr;gap:12px;padding:32px 0}.work-index{font-size:2rem}.journey li{grid-template-columns:1fr;gap:6px}.skill-groups{grid-template-columns:1fr}.contact-actions{flex-direction:column;align-items:stretch}}",
+      "@media(max-width:420px){.pf{padding:36px 16px 32px}.hero{margin:36px 0 60px;gap:24px}.avatar,.monogram{width:96px;height:96px}.stat-label{font-size:9.5px;letter-spacing:.14em}.work-card{padding:28px 0}.timeline{padding-left:24px}.skill-group{padding:20px}}",
       "@media(prefers-reduced-motion:reduce){.motion-on .reveal{opacity:1;transform:none;transition:none}}"
     ];
 
@@ -2247,12 +2221,11 @@
     return root + "\n" + R.join("\n");
   }
 
-  /* self-contained motion script for the exported HTML (reveals + tilt only) */
+  /* self-contained motion script for the exported HTML (restrained reveals only) */
   function exportMotionJS() {
     return "(function(){\n'use strict';\n" +
       "var mq=window.matchMedia;\n" +
       "if(mq&&mq('(prefers-reduced-motion: reduce)').matches)return;\n" +
-      "var fine=mq&&mq('(hover: hover) and (pointer: fine)').matches;\n" +
       "document.documentElement.className+=' motion-on';\n" +
       "var rev=document.querySelectorAll('.reveal');\n" +
       "function showEl(el,i){el.style.transitionDelay=((i%4)*70)+'ms';el.classList.add('in');}\n" +
@@ -2260,12 +2233,6 @@
       "var io=new IntersectionObserver(function(es){for(var k=0;k<es.length;k++){if(es[k].isIntersecting){var idx=Array.prototype.indexOf.call(rev,es[k].target);showEl(es[k].target,idx);io.unobserve(es[k].target);}}},{threshold:0.08,rootMargin:'0px 0px -6% 0px'});\n" +
       "for(var r=0;r<rev.length;r++)io.observe(rev[r]);\n" +
       "}else{for(var r2=0;r2<rev.length;r2++)showEl(rev[r2],r2);}\n" +
-      "if(fine){\n" +
-      "var cards=document.querySelectorAll('.work-card');\n" +
-      "for(var c=0;c<cards.length;c++)(function(card){\n" +
-      "card.addEventListener('mousemove',function(ev){var b=card.getBoundingClientRect();var px=(ev.clientX-b.left)/b.width-0.5,py=(ev.clientY-b.top)/b.height-0.5;card.classList.add('tilting');card.style.transform='perspective(1200px) rotateX('+(-py*3).toFixed(2)+'deg) rotateY('+(px*4).toFixed(2)+'deg)';});\n" +
-      "card.addEventListener('mouseleave',function(){card.classList.remove('tilting');card.style.transform='';});\n" +
-      "})(cards[c]);}\n" +
       "})();";
   }
 
@@ -2304,9 +2271,6 @@
     /* reset transient motion state so the file opens clean */
     root.querySelectorAll(".in").forEach(function (el) { el.classList.remove("in"); });
     root.querySelectorAll(".reveal").forEach(function (el) { el.style.transitionDelay = ""; });
-    root.querySelectorAll(".work-card").forEach(function (el) {
-      el.classList.remove("tilting"); el.style.transform = "";
-    });
     root.querySelectorAll("script").forEach(function (el) { el.remove(); });
 
     var main = root.querySelector("main.portfolio");
