@@ -1,106 +1,134 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Portfolio — PortfolioForge</title>
-<meta name="description" content="A portfolio shared via PortfolioForge.">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..700;1,9..144,300..700&family=Space+Grotesk:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#F4F1EA">
+<meta name="description" content="PortfolioForge turns a GitHub profile or resume into a full portfolio site. Type a username, tune the theme, download the HTML or share a link.">
+<title>PortfolioForge: Forge a portfolio from your GitHub</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23E04E1A'/%3E%3Ctext x='16' y='22' font-family='monospace' font-size='16' font-weight='bold' text-anchor='middle' fill='%23F4F1EA'%3EPF%3C/text%3E%3C/svg%3E">
 <link rel="stylesheet" href="styles.css">
 </head>
 <body>
-<div class="grain" aria-hidden="true"></div>
 
-<header class="site-header">
-  <div class="wrap header-inner">
-    <a class="brand" href="#" id="nav-brand">PortfolioForge<span class="brand-dot">.</span></a>
-    <nav class="site-nav" aria-label="Primary">
-      <button id="nav-create" type="button" class="active">Create</button>
-      <button id="nav-dashboard" type="button">Dashboard</button>
-    </nav>
-    <div class="auth-area" id="auth-area"></div>
-  </div>
-</header>
+<div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
 
-<!-- ══════════ GENERATOR / LANDING ══════════ -->
-<main id="view-generator" class="view">
-  <div class="landing">
-    <p class="kicker">PortfolioForge</p>
-    <h1 class="landing-title">A portfolio that reads like <em>you</em>,<br>built in seconds.</h1>
-    <p class="landing-sub">Start from a GitHub profile or your resume. Edit the words, pick a theme, download the HTML — or save it to your account and share a link.</p>
+<!-- ══════════ SITE NAV ══════════ -->
+<!-- ══════════ GENERATOR ══════════ -->
+<section id="view-generator" class="view">
+  <div class="wrap gen-grid">
+    <div class="gen-main">
+      <p class="stamp" aria-hidden="true">Generator</p>
+      <h1 class="gen-title">Forge a portfolio from your GitHub.</h1>
+      <p class="gen-sub">Type a username. We read the public profile, repos and activity,
+        then print a full portfolio site. Retheme it, retune the words, download the
+        HTML, or save it to your account and share a link.</p>
 
-    <div class="mode-tabs" role="tablist" aria-label="Generation mode">
-      <button id="tab-github" class="tab active" role="tab" aria-selected="true" aria-controls="panel-github" type="button">GitHub</button>
-      <button id="tab-resume" class="tab" role="tab" aria-selected="false" aria-controls="panel-resume" type="button">Resume</button>
-    </div>
-
-    <div id="panel-github" role="tabpanel" aria-labelledby="tab-github">
-      <form id="gen-form" class="gen-form" autocomplete="off">
-        <div class="input-wrap">
-          <span class="at">@</span>
-          <input id="username-input" type="text" placeholder="github username" spellcheck="false" aria-label="GitHub username">
+      <div class="console" role="region" aria-label="Portfolio generator">
+        <div class="tabs" role="tablist" aria-label="Source">
+          <button id="tab-github" class="tab active" role="tab" aria-selected="true" type="button">GitHub</button>
+          <button id="tab-resume" class="tab" role="tab" aria-selected="false" type="button">Resume</button>
         </div>
-        <button type="submit" class="btn-primary">Generate</button>
-      </form>
-      <div class="chips">
-        <span class="chips-label">Try a demo</span>
-        <button class="chip" data-user="torvalds">torvalds</button>
-        <button class="chip" data-user="sindresorhus">sindresorhus</button>
-        <button class="chip" data-user="gaearon">gaearon</button>
+
+        <div id="panel-github" class="panel" role="tabpanel">
+          <form id="gen-form" class="gen-form" autocomplete="off">
+            <label class="gen-input" for="username-input">
+              <span class="gen-at" aria-hidden="true">@</span>
+              <input id="username-input" type="text" inputmode="text" autocapitalize="none"
+                     autocorrect="off" spellcheck="false" placeholder="github username"
+                     aria-label="GitHub username">
+            </label>
+            <button class="btn-forge" type="submit">Generate</button>
+          </form>
+          <div class="demo-row">
+            <span class="demo-label">Try a demo</span>
+            <button class="chip" type="button" data-demo="torvalds">torvalds</button>
+            <button class="chip" type="button" data-demo="sindresorhus">sindresorhus</button>
+            <button class="chip" type="button" data-demo="gaearon">gaearon</button>
+          </div>
+        </div>
+
+        <div id="panel-resume" class="panel" role="tabpanel" hidden>
+          <div id="dropzone" class="dropzone" tabindex="0" role="button"
+               aria-label="Upload a resume file">
+            <p class="dropzone-title">Drop your resume here</p>
+            <p class="dropzone-sub">PDF, DOCX or plain text. Parsed entirely in your browser.</p>
+            <div class="dropzone-actions">
+              <button id="resume-pick-btn" class="btn-ghost sm" type="button">Choose file</button>
+              <button id="resume-sample-btn" class="btn-ghost sm" type="button">Use sample resume</button>
+            </div>
+            <input id="resume-file" type="file" accept=".pdf,.docx,.txt,.md,.markdown,text/plain" hidden>
+          </div>
+          <div id="resume-file-row" class="file-row" hidden>
+            <span id="resume-filename" class="file-name"></span>
+            <button id="resume-clear" class="btn-ghost sm" type="button">Clear</button>
+          </div>
+          <p id="resume-error" class="field-error" role="alert" hidden></p>
+          <button id="resume-generate-btn" class="btn-forge" type="button">Generate from resume</button>
+        </div>
       </div>
-      <p class="gen-note">Free to try · No sign-up needed · Only public GitHub data</p>
+
+      <ul class="spec-tags" aria-label="Key facts">
+        <li>Free to try</li>
+        <li>No signup</li>
+        <li>Public data only</li>
+      </ul>
     </div>
 
-    <div id="panel-resume" role="tabpanel" aria-labelledby="tab-resume" hidden>
-      <div id="dropzone" class="dropzone" tabindex="0" role="button" aria-label="Upload your resume file">
-        <p class="dz-title">Drop your resume here</p>
-        <p class="dz-sub">or</p>
-        <button id="resume-pick-btn" class="btn-ghost sm" type="button">Choose file</button>
-        <input id="resume-file" type="file" accept=".pdf,.docx,.txt,.md" hidden>
-        <p class="dz-formats">PDF · DOCX · TXT · Markdown</p>
+    <aside class="gen-spec" aria-label="What the generator does">
+      <div class="spec-card">
+        <p class="spec-head">Input spec</p>
+        <ul class="spec-list">
+          <li>Profile</li><li>Repositories</li><li>Stars and forks</li>
+          <li>Languages</li><li>Public activity</li><li>Social links</li>
+        </ul>
+        <p class="spec-head">Output spec</p>
+        <ul class="spec-list">
+          <li>Hero</li><li>About</li><li>Selected work</li>
+          <li>Activity</li><li>Stack</li><li>Journey</li><li>Contact</li>
+        </ul>
       </div>
-      <p class="privacy-note">Parsed 100% in your browser — your file never leaves this device.</p>
-      <div id="resume-file-row" class="file-row" hidden>
-        <span id="resume-filename" class="file-name"></span>
-        <button id="resume-clear" class="btn-ghost sm" type="button" aria-label="Remove file">✕</button>
-      </div>
-      <p id="resume-error" class="resume-error" role="alert" hidden></p>
-      <button id="resume-generate-btn" class="btn-primary" type="button" disabled>Generate portfolio</button>
-      <div class="sample-row">
-        <span class="chips-label">No resume handy?</span>
-        <button id="resume-sample-btn" class="chip" type="button">Try a sample resume</button>
-      </div>
-      <p class="gen-note">Free to try · No uploads · Works fully offline after load</p>
-    </div>
-
-    <div class="landing-features">
-      <div class="feature">
-        <h3>From GitHub</h3>
-        <p>Repositories, activity, languages and stats — composed into a proper editorial layout, ranked and captioned automatically.</p>
-      </div>
-      <div class="feature">
-        <h3>From a resume</h3>
-        <p>PDF, DOCX or plain text parsed entirely in your browser. Experience, projects and skills become sections, not bullet dumps.</p>
-      </div>
-      <div class="feature">
-        <h3>Yours to keep</h3>
-        <p>Tune the theme, type and copy in the Customize panel. Download a standalone HTML file, or save to your account and share a link.</p>
-      </div>
-    </div>
-
-    <p class="landing-foot">PortfolioForge · Crafted portfolios from public data</p>
+    </aside>
   </div>
-</main>
+
+  <div class="wrap feat-grid">
+    <div class="feat feat-wide">
+      <p class="stamp">From GitHub</p>
+      <h2>Your code becomes the portfolio.</h2>
+      <p>Repositories ranked by stars, README excerpts pulled automatically, language
+        mix charted, activity drawn as a timeline, and social links wired up. Every
+        forge reads the latest public data.</p>
+    </div>
+    <div class="feat-stack">
+      <div class="feat">
+        <p class="stamp">From a resume</p>
+        <h2>No GitHub? No problem.</h2>
+        <p>Drop a PDF, DOCX or text resume. It is parsed on your device, you review
+          what goes in, and experience, projects and skills become proper sections.</p>
+      </div>
+      <div class="feat">
+        <p class="stamp">Yours to keep</p>
+        <h2>Tune it, then take it.</h2>
+        <p>Eight shop themes, four type systems, section switches, your own words and
+          photo. Download a standalone HTML file, or save to your account and share
+          a public link.</p>
+      </div>
+    </div>
+  </div>
+
+  <footer class="site-foot">
+    <div class="wrap foot-inner">
+      <span class="brand small"><span class="brand-stamp" aria-hidden="true">PF</span> PortfolioForge</span>
+      <p class="foot-note">Portfolios printed from public data.</p>
+    </div>
+  </footer>
+</section>
 
 <!-- ══════════ DASHBOARD ══════════ -->
 <section id="view-dashboard" class="view" hidden>
-  <div class="wrap narrow">
-    <div class="dash-head">
-      <h1>Dashboard</h1>
-      <p>Your saved portfolios. Open one to keep editing, or share a public link with anyone.</p>
-    </div>
+  <div class="wrap">
+    <p class="stamp">Dashboard</p>
+    <h1 class="page-title">Saved portfolios</h1>
     <div id="dashboard-content"></div>
   </div>
 </section>
@@ -112,24 +140,23 @@
       <div class="sk sk-pill"></div>
       <div class="sk sk-pill short"></div>
     </div>
-    <div class="hero">
+    <div class="hero-sk">
       <div class="sk sk-avatar"></div>
-      <div class="hero-text">
+      <div class="hero-sk-text">
         <div class="sk sk-line w60"></div>
         <div class="sk sk-line w90"></div>
         <div class="sk sk-line w40"></div>
       </div>
     </div>
-    <div class="stats">
-      <div class="sk sk-stat"></div><div class="sk sk-stat"></div><div class="sk sk-stat"></div><div class="sk sk-stat"></div><div class="sk sk-stat"></div>
+    <div class="stats-sk">
+      <div class="sk sk-stat"></div><div class="sk sk-stat"></div><div class="sk sk-stat"></div>
+      <div class="sk sk-stat"></div><div class="sk sk-stat"></div>
     </div>
     <div class="sk sk-line w30 section-gap"></div>
-    <div class="work-list">
+    <div class="work-sk">
       <div class="sk sk-work"></div><div class="sk sk-work"></div><div class="sk sk-work"></div>
     </div>
-    <div class="sk sk-line w30 section-gap"></div>
-    <div class="sk sk-line w80"></div><div class="sk sk-line w60"></div><div class="sk sk-line w70"></div>
-    <p class="loading-msg"><span class="spinner"></span> Forging portfolio…</p>
+    <p class="loading-msg"><span class="spinner" aria-hidden="true"></span> Forging portfolio…</p>
   </div>
 </section>
 
@@ -137,12 +164,12 @@
 <section id="view-error" class="view" hidden>
   <div class="wrap">
     <div class="error-card">
-      <p class="kicker error-eyebrow">Something went wrong</p>
+      <p class="stamp">Something went wrong</p>
       <h2 id="error-title" class="error-title">User not found</h2>
       <p id="error-msg" class="error-msg"></p>
       <div class="error-actions">
-        <button id="retry-btn" class="btn-primary sm">Try again</button>
-        <button id="error-back-btn" class="btn-ghost sm">Start over</button>
+        <button id="retry-btn" class="btn-forge sm" type="button">Try again</button>
+        <button id="error-back-btn" class="btn-ghost sm" type="button">Start over</button>
       </div>
     </div>
   </div>
@@ -152,9 +179,9 @@
 <div id="view-portfolio" class="view" hidden>
   <div class="toolbar">
     <div class="wrap toolbar-inner">
-      <span class="brand small">PortfolioForge<span class="brand-dot">.</span></span>
+      <span class="brand small"><span class="brand-stamp" aria-hidden="true">PF</span> PortfolioForge</span>
       <div class="toolbar-actions">
-        <button id="save-btn" class="btn-primary sm" type="button">Save</button>
+        <button id="save-btn" class="btn-forge sm" type="button">Save</button>
         <button id="customize-btn" class="btn-ghost sm" type="button">Customize</button>
         <button id="download-btn" class="btn-ghost sm" type="button">Download HTML</button>
         <button id="startover-btn" class="btn-ghost sm" type="button">Start over</button>
@@ -162,110 +189,98 @@
     </div>
     <nav class="mini-nav" aria-label="Portfolio sections">
       <div class="wrap mini-nav-inner">
-        <a id="nav-portrait" href="#sec-hero">Portrait</a>
-        <a id="nav-about" href="#sec-about">About</a>
-        <a id="nav-work" href="#sec-work">Work</a>
-        <a id="nav-activity" href="#sec-activity" data-nav="activity">Activity</a>
-        <a id="nav-stack" href="#sec-stack" data-nav="stack">Stack</a>
-        <a id="nav-journey" href="#sec-journey" data-nav="journey">Journey</a>
-        <a id="nav-contact" href="#sec-contact">Contact</a>
+        <a href="#sec-hero">Portrait</a>
+        <a href="#sec-about">About</a>
+        <a href="#sec-work">Work</a>
+        <a href="#sec-activity" data-nav="activity">Activity</a>
+        <a href="#sec-stack" data-nav="stack">Stack</a>
+        <a href="#sec-journey" data-nav="journey">Journey</a>
+        <a href="#sec-contact">Contact</a>
       </div>
     </nav>
   </div>
 
   <main class="wrap portfolio">
-    <!-- 01 · HERO -->
     <header id="sec-hero" class="hero reveal">
-      <div class="hero-top">
-        <p class="sec-eyebrow"><span class="sec-num">01</span> / Portrait</p>
-        <p class="hero-status" id="pf-status"><span class="status-dot" aria-hidden="true"></span>Open for work</p>
-      </div>
       <div class="hero-grid">
-        <div class="hero-text">
+        <div class="hero-main">
+          <p class="stamp">Portrait</p>
+          <div class="hero-id">
+            <span class="plate">
+              <img id="pf-avatar" class="avatar" alt="Profile photo">
+              <span id="pf-monogram" class="monogram" aria-hidden="true" hidden></span>
+            </span>
+            <p id="pf-status" class="work-stamp" hidden>Open for work</p>
+          </div>
           <h1 id="pf-name" class="pf-name"></h1>
           <p id="pf-tagline" class="pf-tagline"></p>
         </div>
-        <figure class="hero-figure">
-          <span class="figure-frame">
-            <img id="pf-avatar" class="avatar" alt="Profile photo">
-            <span id="pf-monogram" class="monogram" aria-hidden="true" hidden></span>
-          </span>
-          <figcaption><span>fig. 01</span> — the developer</figcaption>
-        </figure>
-      </div>
-      <div class="hero-foot">
-        <p class="pf-meta"><span id="pf-location"></span><span id="pf-meta-sep"> · </span><a id="pf-github" target="_blank" rel="noopener"></a></p>
-        <a href="#sec-about" class="scroll-cue" aria-label="Scroll to about section"><span></span>Scroll</a>
+        <aside class="spec-plate" aria-label="Profile details">
+          <dl>
+            <div class="spec-row"><dt>Location</dt><dd id="pf-location"></dd></div>
+            <div class="spec-row"><dt>GitHub</dt><dd><a id="pf-github" target="_blank" rel="noopener"></a></dd></div>
+          </dl>
+          <span id="pf-meta-sep" hidden></span>
+        </aside>
       </div>
     </header>
 
-    <div class="marquee reveal" aria-hidden="true"><div class="marquee-track"><span>Designed with care</span><i>◆</i><span>Open source</span><i>◆</i><span>Built to last</span><i>◆</i><span>Designed with care</span><i>◆</i><span>Open source</span><i>◆</i><span>Built to last</span><i>◆</i></div></div>
-
-    <!-- 02 · ABOUT -->
     <section id="sec-about" class="reveal">
-      <p id="eyebrow-about" class="sec-eyebrow"><span class="sec-num">02</span> / About</p>
-      <h2 id="title-about" class="sec-title">The Developer</h2>
-      <div class="hairline"></div>
-      <p id="about-bio" class="about-bio dropcap"></p>
+      <p class="stamp">About</p>
+      <h2 id="title-about" class="sec-title">About</h2>
+      <p id="about-bio" class="about-bio"></p>
       <p id="about-meta" class="about-meta"></p>
       <div class="stats">
-        <div class="stat"><span id="st-repos" class="stat-num"></span><span id="sl-repos" class="stat-label">Public repos</span></div>
-        <div class="stat"><span id="st-followers" class="stat-num"></span><span id="sl-followers" class="stat-label">Followers</span></div>
-        <div class="stat"><span id="st-stars" class="stat-num"></span><span id="sl-stars" class="stat-label">Total stars</span></div>
-        <div class="stat"><span id="st-forks" class="stat-num"></span><span id="sl-forks" class="stat-label">Total forks</span></div>
-        <div class="stat"><span id="st-years" class="stat-num"></span><span id="sl-years" class="stat-label">Years on GitHub</span></div>
+        <div class="stat"><span id="stat-num-repos" class="stat-num"></span><span id="stat-label-repos" class="stat-label">Public repos</span></div>
+        <div class="stat"><span id="stat-num-followers" class="stat-num"></span><span id="stat-label-followers" class="stat-label">Followers</span></div>
+        <div class="stat"><span id="stat-num-stars" class="stat-num"></span><span id="stat-label-stars" class="stat-label">Total stars</span></div>
+        <div class="stat"><span id="stat-num-forks" class="stat-num"></span><span id="stat-label-forks" class="stat-label">Total forks</span></div>
+        <div class="stat" id="stat-years"><span id="stat-num-years" class="stat-num"></span><span id="stat-label-years" class="stat-label">Years on GitHub</span></div>
       </div>
     </section>
 
-    <!-- 03 · SELECTED WORK -->
     <section id="sec-work" class="reveal">
-      <p id="eyebrow-work" class="sec-eyebrow"><span class="sec-num">03</span> / Selected Work</p>
-      <h2 id="title-work" class="sec-title">Selected Work <span class="section-note">— top repositories, ranked by stars</span></h2>
-      <div class="hairline"></div>
+      <p class="stamp">Work</p>
+      <h2 id="title-work" class="sec-title">Selected Work</h2>
+      <p class="sec-spec">Top repositories, ranked by stars</p>
       <p id="work-note" class="inline-note" hidden></p>
-      <div id="work-grid" class="work-list"></div>
+      <div id="work-list" class="work-list"></div>
     </section>
 
-    <!-- 04 · ACTIVITY -->
     <section id="sec-activity" class="reveal">
-      <p id="eyebrow-activity" class="sec-eyebrow"><span class="sec-num">04</span> / Activity</p>
-      <h2 id="title-activity" class="sec-title">Recent Activity <span class="section-note">— public events</span></h2>
-      <div class="hairline"></div>
+      <p class="stamp">Activity</p>
+      <h2 id="title-activity" class="sec-title">Recent Activity</h2>
+      <p class="sec-spec">Public events</p>
       <p id="activity-note" class="inline-note" hidden></p>
       <div id="activity-timeline" class="timeline"></div>
     </section>
 
-    <!-- 05 · TECH STACK -->
     <section id="sec-stack" class="reveal">
-      <p id="eyebrow-stack" class="sec-eyebrow"><span class="sec-num">05</span> / Toolbox</p>
-      <h2 id="title-stack" class="sec-title">Tech Stack <span class="section-note">— languages by repository</span></h2>
-      <div class="hairline"></div>
+      <p class="stamp">Stack</p>
+      <h2 id="title-stack" class="sec-title">Tech Stack</h2>
+      <p class="sec-spec">Languages by repository</p>
       <div id="lang-bar" class="lang-bar"></div>
       <div id="lang-legend" class="lang-legend"></div>
       <div id="skill-groups" class="skill-groups" hidden></div>
     </section>
 
-    <!-- 06 · JOURNEY -->
     <section id="sec-journey" class="reveal">
-      <p id="eyebrow-journey" class="sec-eyebrow"><span class="sec-num">06</span> / Journey</p>
+      <p class="stamp">Journey</p>
       <h2 id="title-journey" class="sec-title">The Journey</h2>
-      <div class="hairline"></div>
       <ol id="journey-list" class="journey"></ol>
     </section>
 
-    <!-- 07 · CONTACT -->
     <section id="sec-contact" class="reveal">
-      <p class="sec-eyebrow"><span class="sec-num">07</span> / Contact</p>
-      <h2 class="sec-title">Let&rsquo;s build something.</h2>
-      <div class="hairline"></div>
+      <p class="stamp">Contact</p>
+      <h2 class="sec-title contact-title">Get in touch.</h2>
       <p class="contact-sub">Open to collaboration, open source, and interesting problems.</p>
       <div id="contact-links" class="contact-actions"></div>
     </section>
 
     <footer class="pf-footer reveal">
       <div class="footer-rule"></div>
-      <p class="colophon">Set in Fraunces &amp; Space Grotesk — composed by PortfolioForge</p>
-      <p id="footer-note">Forged with <strong>PortfolioForge</strong> — from public GitHub data.</p>
+      <p class="colophon">Composed by PortfolioForge</p>
+      <p id="footer-note"></p>
     </footer>
   </main>
 
@@ -274,10 +289,10 @@
   <aside id="drawer" class="drawer" aria-label="Customize portfolio" hidden>
     <div class="drawer-head">
       <div>
-        <p class="eyebrow" style="margin:0 0 6px">Make it yours</p>
+        <p class="stamp" style="margin:0 0 6px">Workshop</p>
         <h2 class="drawer-title">Customize</h2>
       </div>
-      <button id="drawer-close" class="btn-ghost sm" aria-label="Close customize panel">✕</button>
+      <button id="drawer-close" class="btn-ghost sm" aria-label="Close customize panel" type="button">&times;</button>
     </div>
     <div class="drawer-body">
       <div class="ctl-group">
@@ -308,100 +323,104 @@
           </div>
           <input id="photo-input" type="file" accept="image/*" hidden>
         </div>
-        <div id="shape-options" class="seg" role="group" aria-label="Avatar shape" style="margin-top:14px">
-          <button type="button" data-shape="circle" class="active">Circle</button>
-          <button type="button" data-shape="rounded">Rounded square</button>
-        </div>
         <p id="photo-hint" class="photo-hint" aria-live="polite"></p>
-        <p class="ctl-hint">Stored only in this browser — your photo never leaves this device. Removed automatically when you generate a new portfolio.</p>
+        <p class="ctl-hint">Stored only in this browser. Your photo never leaves this device, and it is removed when you generate a new portfolio.</p>
       </div>
       <div class="ctl-group">
         <h3>Motion</h3>
         <label class="switch"><input id="tgl-motion" type="checkbox"><span class="knob" aria-hidden="true"></span><span class="switch-label">Subtle motion</span></label>
-        <p class="ctl-hint">Gentle scroll reveals and a soft tilt on project cards. Automatically disabled if you prefer reduced motion.</p>
+        <p class="ctl-hint">Gentle scroll reveals. Automatically disabled if you prefer reduced motion.</p>
       </div>
       <div class="ctl-group">
         <h3>Density</h3>
         <div id="density-options" class="seg" role="group" aria-label="Density"></div>
       </div>
     </div>
-    <div class="drawer-foot"><p>Changes apply instantly · Download HTML keeps everything</p></div>
+    <div class="drawer-foot"><p>Changes apply instantly. Download HTML keeps everything.</p></div>
   </aside>
+</div>
+
+<!-- view.html shared-page error shell -->
+<div id="viewpage-error" class="view" hidden>
+  <div class="error-card">
+    <p class="stamp">Shared link</p>
+    <h2 id="viewpage-error-title" class="error-title">Link not found</h2>
+    <p id="viewpage-error-msg" class="error-msg"></p>
+  </div>
 </div>
 
 <!-- ══════════ AUTH MODAL ══════════ -->
 <div id="auth-modal" class="modal" hidden>
   <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="auth-title">
-    <button class="modal-close" id="auth-close" type="button" aria-label="Close">✕</button>
-    <h2 id="auth-title">Sign in</h2>
-    <p class="modal-sub" id="auth-sub">Sign in to save portfolios to your account.</p>
+    <p class="stamp">Account</p>
+    <h2 id="auth-title" class="modal-title">Sign in</h2>
+    <p id="auth-sub" class="modal-sub">Save portfolios and share public links.</p>
     <div class="auth-tabs" role="tablist">
-      <button id="auth-tab-signin" type="button" class="active" role="tab">Sign in</button>
-      <button id="auth-tab-signup" type="button" role="tab">Create account</button>
+      <button id="auth-tab-signin" class="tab active" role="tab" aria-selected="true" type="button">Sign in</button>
+      <button id="auth-tab-signup" class="tab" role="tab" aria-selected="false" type="button">Create account</button>
     </div>
-    <form id="auth-form" autocomplete="on">
-      <label class="fld" id="auth-name-row" hidden><span>Display name</span><input id="auth-name" type="text" maxlength="60" placeholder="Your name"></label>
-      <label class="fld"><span>Email</span><input id="auth-email" type="email" required placeholder="you@example.com"></label>
-      <label class="fld"><span>Password</span><input id="auth-password" type="password" required minlength="6" placeholder="Minimum 6 characters"></label>
-      <p class="form-error" id="auth-error" hidden></p>
-      <button class="btn-primary" id="auth-submit" type="submit">Sign in</button>
+    <button id="auth-google" class="btn-google" type="button">
+      <span class="glyph" aria-hidden="true">G</span>
+      <span id="auth-google-label">Continue with Google</span>
+    </button>
+    <form id="auth-form">
+      <div id="auth-name-row" class="fld" hidden>
+        <span>Name</span>
+        <input id="auth-name" type="text" autocomplete="name" placeholder="Your name">
+      </div>
+      <label class="fld"><span>Email</span><input id="auth-email" type="email" autocomplete="email" placeholder="you@example.com"></label>
+      <label class="fld"><span>Password</span><input id="auth-password" type="password" autocomplete="current-password" placeholder="Your password"></label>
+      <p id="auth-error" class="field-error" role="alert" hidden></p>
+      <button id="auth-submit" class="btn-forge" type="submit">Sign in</button>
     </form>
-    <p class="auth-note">Your session stays signed in on this device.</p>
+    <button id="auth-close" class="modal-x" aria-label="Close" type="button">&times;</button>
   </div>
 </div>
 
 <!-- ══════════ SAVE MODAL ══════════ -->
 <div id="save-modal" class="modal" hidden>
   <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="save-title">
-    <button class="modal-close" id="save-close" type="button" aria-label="Close">✕</button>
-    <h2 id="save-title">Save portfolio</h2>
-    <p class="modal-sub">Give it a title. Saving again later updates the same entry.</p>
-    <form id="save-form">
-      <label class="fld"><span>Title</span><input id="save-title-input" type="text" maxlength="80" required placeholder="e.g. My 2026 portfolio"></label>
-      <p class="form-error" id="save-error" hidden></p>
-      <div style="display:flex;gap:10px">
-        <button class="btn-primary" id="save-confirm" type="submit" style="flex:1">Save</button>
-        <button class="btn-ghost" id="save-cancel" type="button">Cancel</button>
-      </div>
-    </form>
-  </div>
-</div>
-
-
-<!-- ══════════ SHARE-LINK ERROR ══════════ -->
-<div id="viewpage-error" class="view" hidden>
-  <div class="wrap">
-    <div class="error-card">
-      <p class="kicker error-eyebrow">Portfolio link</p>
-      <h2 id="viewpage-error-title" class="error-title">Link not found</h2>
-      <p id="viewpage-error-msg" class="error-msg"></p>
-      <div class="error-actions">
-        <a class="btn-primary sm" href="index.html" style="text-decoration:none;display:inline-block">Create your own portfolio</a>
-      </div>
+    <p class="stamp">Save</p>
+    <h2 id="save-title" class="modal-title">Save portfolio</h2>
+    <p class="modal-sub">Stored in your account. You can make it public and share a link later.</p>
+    <label class="fld"><span>Title</span><input id="save-title-input" type="text" maxlength="80" placeholder="Portfolio title"></label>
+    <p id="save-error" class="field-error" role="alert" hidden></p>
+    <div class="modal-actions">
+      <button id="save-confirm" class="btn-forge sm" type="button">Save</button>
+      <button id="save-cancel" class="btn-ghost sm" type="button">Cancel</button>
     </div>
+    <button id="save-close" class="modal-x" aria-label="Close" type="button">&times;</button>
   </div>
 </div>
 
 <!-- ══════════ PRIVACY REVIEW MODAL ══════════ -->
 <div id="privacy-modal" class="modal" hidden>
-  <div class="modal-card" role="dialog" aria-modal="true" aria-labelledby="privacy-title">
-    <h2 id="privacy-title">Your contact details</h2>
-    <p class="modal-sub">We found these in your resume. Choose exactly what appears in your portfolio — anything you leave out is never rendered, saved, downloaded, or shared.</p>
-    <div id="privacy-fields"></div>
-    <div class="privacy-quick">
-      <button id="privacy-all" class="btn-ghost sm" type="button">Include all</button>
-      <button id="privacy-none" class="btn-ghost sm" type="button">Exclude all</button>
+  <div class="modal-card wide" role="dialog" aria-modal="true" aria-labelledby="privacy-title">
+    <p class="stamp">Review</p>
+    <h2 id="privacy-title" class="modal-title">Check what goes in</h2>
+    <p class="modal-sub">Uncheck anything you do not want in the portfolio. Sensitive fields are off by default.</p>
+    <div class="privacy-actions">
+      <button id="privacy-all" class="btn-ghost sm" type="button">Select all</button>
+      <button id="privacy-none" class="btn-ghost sm" type="button">Select none</button>
     </div>
-    <button class="btn-primary" id="privacy-confirm" type="button">Build my portfolio</button>
-    <p class="auth-note">Email, phone and location stay excluded unless you opt in.<br><button class="linklike" id="privacy-back" type="button">← Back to generator</button></p>
+    <div id="privacy-fields" class="privacy-fields"></div>
+    <div class="modal-actions">
+      <button id="privacy-confirm" class="btn-forge sm" type="button">Generate portfolio</button>
+      <button id="privacy-back" class="btn-ghost sm" type="button">Back</button>
+    </div>
   </div>
 </div>
 
-<div id="toast" class="toast" hidden></div>
-
+<script src="vendor/three.min.js"></script>
+<script src="vendor/vanta.net.min.js"></script>
+<script src="vendor/vanta.waves.min.js"></script>
+<script src="vendor/gsap.min.js"></script>
+<script src="vendor/lenis.min.js"></script>
+<script src="js/fx.js"></script>
+<script src="js/supabase-client.js"></script>
 <script src="supabase-config.js"></script>
 <script src="app.js"></script>
-<script src="js/supabase-client.js"></script>
+<script src="js/backend.js"></script>
 <script src="js/view.js"></script>
 </body>
 </html>

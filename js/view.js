@@ -67,7 +67,6 @@
     }
     document.title = (res.data.title || "Portfolio") + " — PortfolioForge";
     PF.show("portfolio");
-    window.scrollTo(0, 0);
   }).catch(function (err) {
     fail("Couldn't load this portfolio", (err && err.message) || "Something went wrong — try again.");
   });
