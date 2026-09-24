@@ -1,0 +1,1 @@
+{"name":"portfolioforge-brag","private":true,"scripts":{"check":"node /home/hatch/workspace/vendor/hyperframes/node_modules/hyperframes/bin/hyperframes.mjs check","render":"node /home/hatch/workspace/vendor/hyperframes/node_modules/hyperframes/bin/hyperframes.mjs render"},"type":"module"}

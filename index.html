@@ -10,6 +10,8 @@
 <title>PortfolioForge: print a portfolio from your GitHub</title>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23D9480F'/%3E%3Ctext x='16' y='22' font-family='monospace' font-size='16' font-weight='bold' text-anchor='middle' fill='%23F6F3EC'%3EPF%3C/text%3E%3C/svg%3E">
 <link rel="stylesheet" href="styles.css">
+<link rel="preload" href="fonts/clash-display-700.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="fonts/clash-display-600.woff2" as="font" type="font/woff2" crossorigin>
 </head>
 <body data-theme="paper">
 
@@ -36,7 +38,7 @@
 <section id="view-generator" class="view">
   <div class="wrap hero-split">
     <div class="hero-copy">
-      <h1 class="hero-title">Your GitHub,<br>printed as a portfolio.</h1>
+      <h1 class="hero-title">Your GitHub, printed as a portfolio.</h1>
       <p class="hero-sub">Type a username. We read the public profile, repos and activity, then print a complete portfolio site.</p>
 
       <div class="console" role="region" aria-label="Portfolio generator">
@@ -105,7 +107,7 @@
         </div>
         <a class="btn-primary sm specimen-cta" href="#view-generator" tabindex="-1">View profile</a>
       </div>
-      <p class="specimen-cap">A live specimen of the default theme. Every portfolio ships with eight themes and four type systems.</p>
+      <p class="specimen-cap">A live specimen of your current theme and type. Click any theme or type system below to preview it here. Your choice carries into the portfolio you print.</p>
     </aside>
   </div>
 
@@ -113,25 +115,16 @@
     <h2 class="sec-title">How it works</h2>
     <ol class="step-rows">
       <li>
-        <span class="step-num" aria-hidden="true">01</span>
-        <div>
-          <h3>Connect</h3>
+        <h3>Connect</h3>
           <p>Type a GitHub username or drop a resume. Only public data is read, and resumes are parsed on your device.</p>
-        </div>
       </li>
       <li>
-        <span class="step-num" aria-hidden="true">02</span>
-        <div>
-          <h3>Review</h3>
+        <h3>Review</h3>
           <p>Check exactly what goes into the portfolio. Uncheck anything you would rather leave out.</p>
-        </div>
       </li>
       <li>
-        <span class="step-num" aria-hidden="true">03</span>
-        <div>
-          <h3>Keep</h3>
+        <h3>Keep</h3>
           <p>Tune the theme and typography, then download a standalone HTML file or save it and share a link.</p>
-        </div>
       </li>
     </ol>
   </div>

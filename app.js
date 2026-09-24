@@ -50,18 +50,21 @@
               line: "#DCDCD6", lineSoft: "#E8E8E2", rgb: [217, 45, 32] } }
   ];
 
-  /* typography: Archivo for display/body, IBM Plex Mono for data labels (self-hosted, system fallbacks) */
+  /* typography: Clash Display for headlines, Zodiak for the editorial serif,
+     Archivo for body, IBM Plex Mono for data labels (all self-hosted, system fallbacks) */
   var ARCHIVO_STACK = '"Archivo",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif';
+  var CLASH_STACK = '"Clash Display","Archivo",-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif';
+  var ZODIAK_STACK = '"Zodiak",Georgia,"Times New Roman",serif';
   var MONO_STACK = '"IBM Plex Mono",ui-monospace,"SF Mono",SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace';
   var FONTS = [
-    { key: "grotesk", name: "Grotesk", hint: "Expanded black display, set in caps",
-      display: ARCHIVO_STACK, body: ARCHIVO_STACK, mono: MONO_STACK },
-    { key: "editorial", name: "Editorial", hint: "Tightened display, calm sentence case",
-      display: ARCHIVO_STACK, body: ARCHIVO_STACK, mono: MONO_STACK },
+    { key: "grotesk", name: "Grotesk", hint: "Confident display voice, set in caps",
+      display: CLASH_STACK, body: ARCHIVO_STACK, mono: MONO_STACK, faces: "Clash Display" },
+    { key: "editorial", name: "Editorial", hint: "Literary serif voice, calm sentence case",
+      display: ZODIAK_STACK, body: ARCHIVO_STACK, mono: MONO_STACK, faces: "Zodiak" },
     { key: "technical", name: "Technical", hint: "Condensed caps, precise voice",
-      display: ARCHIVO_STACK, body: ARCHIVO_STACK, mono: MONO_STACK },
+      display: ARCHIVO_STACK, body: ARCHIVO_STACK, mono: MONO_STACK, faces: "Archivo" },
     { key: "mono", name: "Mono", hint: "Monospace voice, terminal calm",
-      display: MONO_STACK, body: ARCHIVO_STACK, mono: MONO_STACK }
+      display: MONO_STACK, body: ARCHIVO_STACK, mono: MONO_STACK, faces: "IBM Plex Mono" }
   ];
 
 
@@ -1466,7 +1469,7 @@
       box.appendChild(lp);
     }
 
-    $("footer-note").innerHTML = 'Printed with <strong>PortfolioForge</strong>. Source: a resume, parsed 100% in your browser.';
+    $("footer-note").innerHTML = colophonHTML("from a resume, parsed in your browser");
 
     applyCustomize();
   }
@@ -1829,6 +1832,11 @@
     buildSectionToggles();
     syncPanel();
     initMotion();
+    /* the colophon names the current faces + theme — keep it truthful after retunes */
+    if (typeof currentSource !== "undefined" && currentSource) {
+      var fnote = $("footer-note");
+      if (fnote) fnote.innerHTML = colophonHTML(mode === "resume" ? "from a resume, parsed in your browser" : "from public GitHub data");
+    }
   }
 
   /* section toggles, rebuilt per mode */
@@ -1860,23 +1868,66 @@
     });
   }
 
-  /* theme + type previews on the generator — rendered in their own tokens */
+  /* theme + type previews on the generator — rendered in their own tokens.
+     Clicking one previews it on the specimen and saves the choice, so the
+     portfolio you generate uses exactly what you previewed. */
+  function previewTheme(key) {
+    var t = themeByKey(key);
+    if (!t) return;
+    cust.theme = key; saveCust();
+    var sp = document.querySelector(".hero-specimen");
+    if (sp) {
+      var v = t.vars;
+      [["--bg", v.bg], ["--bg-2", v.bg2], ["--surface", v.surface], ["--ink", v.ink],
+       ["--muted", v.muted], ["--faint", v.faint], ["--accent", v.accent],
+       ["--accent-2", v.accent2], ["--on-accent", v.onAccent], ["--line", v.line],
+       ["--line-soft", v.lineSoft]].forEach(function (pair) {
+        sp.style.setProperty(pair[0], pair[1]);
+      });
+      var cap = sp.querySelector(".specimen-cap");
+      if (cap) cap.innerHTML = "A live specimen of the " + esc(t.name) + " theme. Click another theme or type system to preview it here. Your choice carries into the portfolio you print.";
+    }
+    var cards = document.querySelectorAll(".theme-card");
+    cards.forEach(function (c) {
+      var on = c.getAttribute("data-theme-key") === key;
+      c.classList.toggle("active", on);
+      c.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+  }
+  function previewFont(key) {
+    var f = fontByKey(key);
+    if (!f) return;
+    cust.font = key; saveCust();
+    var sp = document.querySelector(".hero-specimen");
+    if (sp) sp.setAttribute("data-font", key);
+    var rows = document.querySelectorAll(".type-row");
+    rows.forEach(function (r) {
+      var on = r.getAttribute("data-font-key") === key;
+      r.classList.toggle("active", on);
+      r.setAttribute("aria-pressed", on ? "true" : "false");
+    });
+  }
   function populateThemeCards() {
     var wrap = $("theme-cards");
     if (!wrap) return;
     wrap.innerHTML = "";
     THEMES.forEach(function (t) {
-      var card = document.createElement("article");
+      var card = document.createElement("button");
+      card.type = "button";
       card.className = "theme-card";
+      card.setAttribute("data-theme-key", t.key);
+      card.setAttribute("aria-pressed", t.key === cust.theme ? "true" : "false");
+      if (t.key === cust.theme) card.classList.add("active");
       card.style.setProperty("--card-bg", t.vars.bg);
       card.style.setProperty("--card-ink", t.vars.ink);
       card.style.setProperty("--tc-accent", t.accent);
       card.style.setProperty("--tc-on-accent", t.vars.onAccent);
       card.innerHTML =
-        '<p class="tc-name">' + esc(t.name) + '</p>' +
-        '<p class="tc-line">' + esc(t.hint) + '</p>' +
-        '<span class="tc-cta">View theme</span>' +
+        '<span class="tc-name">' + esc(t.name) + '</span>' +
+        '<span class="tc-line">' + esc(t.hint) + '</span>' +
+        '<span class="tc-cta">Preview theme</span>' +
         '<span class="tc-meta">' + esc(t.vars.bg.toUpperCase() + " / " + t.accent.toUpperCase()) + '</span>';
+      card.addEventListener("click", function () { previewTheme(t.key); });
       wrap.appendChild(card);
     });
   }
@@ -1886,11 +1937,16 @@
     if (!wrap) return;
     wrap.innerHTML = "";
     FONTS.forEach(function (f) {
-      var row = document.createElement("div");
+      var row = document.createElement("button");
+      row.type = "button";
       row.className = "type-row";
+      row.setAttribute("data-font-key", f.key);
+      row.setAttribute("aria-pressed", f.key === cust.font ? "true" : "false");
+      if (f.key === cust.font) row.classList.add("active");
       row.innerHTML =
         '<span class="aa" style="font-family:' + f.display + '">Ag</span>' +
-        '<div><strong>' + esc(f.name) + '</strong><em>' + esc(f.hint) + '</em></div>';
+        '<span><strong>' + esc(f.name) + '</strong><em>' + esc(f.hint) + '</em></span>';
+      row.addEventListener("click", function () { previewFont(f.key); });
       wrap.appendChild(row);
     });
   }
@@ -1908,7 +1964,7 @@
         '<i style="background:' + t.accent + '"></i><i style="background:' + t.accent2 + '"></i></span>' +
         "<span>" + esc(t.name) + "</span>";
       b.addEventListener("click", function () {
-        cust.theme = t.key; saveCust(); applyCustomize();
+        cust.theme = t.key; saveCust(); applyCustomize(); previewTheme(t.key);
       });
       sw.appendChild(b);
     });
@@ -1923,7 +1979,7 @@
       b.innerHTML = '<span class="aa" style="font-family:' + f.display + '" aria-hidden="true">Ag</span>' +
         '<span class="font-meta"><strong>' + esc(f.name) + "</strong><em>" + esc(f.hint) + "</em></span>";
       b.addEventListener("click", function () {
-        cust.font = f.key; saveCust(); applyCustomize();
+        cust.font = f.key; saveCust(); applyCustomize(); previewFont(f.key);
       });
       fo.appendChild(b);
     });
@@ -1981,6 +2037,12 @@
   }
   function closeDrawer() {
     var d = $("drawer"), s = $("drawer-scrim");
+    if (!drawerOpen()) {
+      /* already closed: don't schedule a stray hide timer that could swallow
+         a drawer opened in the next few hundred milliseconds */
+      d.hidden = true; s.hidden = true;
+      return;
+    }
     d.classList.remove("open"); s.classList.remove("open");
     setTimeout(function () { d.hidden = true; s.hidden = true; }, 400);
   }
@@ -1995,6 +2057,18 @@
   function clearMotion() {
     motionCleanup.forEach(function (fn) { try { fn(); } catch (e) { /* ignore */ } });
     motionCleanup = [];
+  }
+
+  /* colophon: which faces printed this portfolio, in which theme, from what source */
+  function colophonHTML(sourceLabel) {
+    var f = fontByKey(cust.font), t = themeByKey(cust.theme);
+    var d = new Date();
+    var months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    var date = d.getDate() + " " + months[d.getMonth()] + " " + d.getFullYear();
+    var faces = f.key === "mono"
+      ? "Set entirely in <strong>IBM Plex Mono</strong>"
+      : "Set in <strong>" + esc(f.faces) + "</strong> and <strong>IBM Plex Mono</strong>";
+    return faces + ". " + esc(t.name) + " theme. Printed " + date + " " + sourceLabel + ".";
   }
 
   function motionActive() {
@@ -2048,7 +2122,7 @@
     $("skill-groups").hidden = true;
     $("lang-bar").hidden = false;
     $("lang-legend").hidden = false;
-    $("footer-note").innerHTML = 'Printed with <strong>PortfolioForge</strong>. Source: public GitHub data.';
+    $("footer-note").innerHTML = colophonHTML("from public GitHub data");
 
     /* hero */
     $("pf-name").textContent = user.name || user.login;
@@ -2195,7 +2269,7 @@
       "--ink:" + v.ink + ";--muted:" + v.muted + ";--faint:" + v.faint + ";" +
       "--accent:" + v.accent + ";--accent-2:" + v.accent2 + ";--on-accent:" + v.onAccent + ";" +
       "--line:" + v.line + ";--line-soft:" + v.lineSoft + ";" +
-      "--font-display:" + f.display + ";--font-body:" + f.body + ";--font-mono:" + f.mono + "}";
+      "--font-display:" + f.display + ";--font-body:" + f.body + ";--font-mono:" + f.mono + ";--font-serif:\"Zodiak\",Georgia,\"Times New Roman\",serif}";
 
     var R = [
       "html{scroll-behavior:smooth}",
@@ -2207,17 +2281,17 @@
       ".hero-top{display:flex;align-items:center;justify-content:space-between;gap:20px;margin-bottom:32px}",
       ".avatar-wrap{position:relative;width:112px;height:112px;flex-shrink:0}",
       ".avatar{width:100%;height:100%;object-fit:cover;border-radius:50%;display:block}",
-      ".monogram{position:absolute;inset:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:800;font-size:2.4rem;color:var(--on-accent);background:var(--accent)}",
+      ".monogram{position:absolute;inset:0;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-weight:600;font-size:2.4rem;color:var(--on-accent);background:var(--accent)}",
       ".monogram[hidden]{display:none}",
       ".availability{display:inline-flex;align-items:center;gap:9px;font-size:14px;font-weight:600;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:9px 18px;margin:0;background:var(--surface);white-space:nowrap}",
       ".availability[hidden]{display:none}",
       ".avail-dot{width:8px;height:8px;border-radius:50%;background:var(--accent);flex-shrink:0}",
-      ".pf-name{font-family:var(--font-display);font-weight:800;font-size:clamp(3rem,8vw,5.4rem);letter-spacing:-.04em;line-height:.98;margin:0 0 20px;text-wrap:balance}",
+      ".pf-name{font-family:var(--font-display);font-weight:700;font-size:clamp(3rem,8vw,5.4rem);letter-spacing:-.04em;line-height:.98;margin:0 0 20px;text-wrap:balance}",
       ".pf-tagline{font-size:clamp(1.15rem,2.4vw,1.45rem);line-height:1.5;color:var(--ink);font-weight:500;max-width:32ch;margin:0 0 32px}",
       ".hero-meta{list-style:none;display:flex;flex-wrap:wrap;gap:12px 32px;margin:0;padding:0}",
       ".hero-meta li{font-size:15px;color:var(--muted);font-weight:600}",
       ".hero-meta a{color:var(--ink);text-decoration:none;border-bottom:2px solid var(--accent);font-weight:700}",
-      ".sec-title{font-family:var(--font-display);font-weight:800;font-size:clamp(2rem,4.2vw,3rem);letter-spacing:-.03em;line-height:1.02;margin:0 0 16px;text-wrap:balance}",
+      ".sec-title{font-family:var(--font-display);font-weight:600;font-size:clamp(2rem,4.2vw,3rem);letter-spacing:-.03em;line-height:1.02;margin:0 0 16px;text-wrap:balance}",
       ".sec-lede{color:var(--muted);font-size:17px;line-height:1.7;max-width:62ch;margin:0 0 48px}",
       ".inline-note{font-size:15px;color:var(--muted);line-height:1.7;background:var(--bg-2);border:1px solid var(--line-soft);border-radius:12px;padding:18px 22px;margin:0 0 8px;max-width:68ch}",
       ".about-bio{font-size:19px;line-height:1.75;max-width:68ch;margin:0 0 24px}",
@@ -2226,12 +2300,12 @@
       ".stats{display:grid;grid-template-columns:repeat(5,1fr)}",
       ".stat{padding:8px 28px 8px 0}",
       ".stat+.stat{border-left:1px solid var(--line-soft);padding-left:28px}",
-      ".stat-num{display:block;font-family:var(--font-display);font-weight:800;font-size:clamp(1.8rem,3vw,2.6rem);letter-spacing:-.03em;line-height:1;margin-bottom:10px;font-variant-numeric:tabular-nums}",
+      ".stat-num{display:block;font-family:var(--font-display);font-weight:600;font-size:clamp(1.8rem,3vw,2.6rem);letter-spacing:-.03em;line-height:1;margin-bottom:10px;font-variant-numeric:tabular-nums}",
       ".stat-label{font-size:12.5px;font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}",
       ".work-list{border-top:1px solid var(--line)}",
       ".work-card{padding:36px 0;border-bottom:1px solid var(--line)}",
       ".work-kicker{font-family:var(--font-mono);font-size:12.5px;font-weight:500;letter-spacing:.06em;text-transform:uppercase;color:var(--faint);margin:0 0 12px}",
-      ".work-name{font-family:var(--font-display);font-weight:800;font-size:clamp(1.6rem,3.2vw,2.3rem);letter-spacing:-.025em;line-height:1.05;margin:0 0 12px}",
+      ".work-name{font-family:var(--font-display);font-weight:600;font-size:clamp(1.6rem,3.2vw,2.3rem);letter-spacing:-.025em;line-height:1.05;margin:0 0 12px}",
       ".work-name a{color:var(--ink);text-decoration:none}",
       ".work-desc{color:var(--muted);font-size:16px;line-height:1.7;max-width:66ch;margin:0 0 18px}",
       ".work-desc-empty{color:var(--faint);font-style:italic}",
@@ -2258,7 +2332,7 @@
       ".exp-bullets li{margin-bottom:6px}",
       ".journey{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}",
       ".journey li{display:grid;grid-template-columns:1fr;gap:10px;padding:32px 0;border-bottom:1px solid var(--line)}",
-      ".j-title{font-family:var(--font-display);font-weight:800;font-size:clamp(1.3rem,2.6vw,1.75rem);letter-spacing:-.02em;margin:0 0 8px}",
+      ".j-title{font-family:var(--font-display);font-weight:600;font-size:clamp(1.3rem,2.6vw,1.75rem);letter-spacing:-.02em;margin:0 0 8px}",
       ".j-detail{color:var(--muted);font-size:16px;line-height:1.7;margin:0;max-width:62ch}",
       ".j-detail a{color:var(--accent);font-weight:600}",
       ".contact-title{font-size:clamp(2.6rem,7vw,4.6rem)}",
@@ -2291,12 +2365,15 @@
     /* per-font display tweaks — mirror the live type systems */
     if (cust.font === "grotesk") {
       R.push(".pf-name,.sec-title,.work-name,.j-title{text-transform:uppercase}");
-      R.push(".pf-name{font-weight:850}");
+      R.push(".pf-name{font-weight:700}");
+      R.push(".pf-name,.sec-title,.work-name,.j-title,.contact-title{word-spacing:.14em}");
     } else if (cust.font === "editorial") {
-      R.push(".pf-name,.sec-title,.work-name,.j-title{font-weight:650;letter-spacing:-.015em;text-transform:none}");
+      R.push(".pf-name,.sec-title,.work-name,.j-title,.contact-title{font-family:var(--font-serif);font-weight:700;letter-spacing:-.01em;text-transform:none}");
+      R.push(".pf-tagline{font-family:var(--font-serif);font-style:italic;font-size:21px;max-width:34ch}");
       R.push(".about-bio{font-size:20px;max-width:62ch}");
     } else if (cust.font === "technical") {
       R.push(".pf-name,.sec-title,.work-name,.j-title{font-weight:750;letter-spacing:.01em;text-transform:uppercase}");
+      R.push(".pf-name,.sec-title,.work-name,.j-title{word-spacing:.14em}");
       R.push(".sec-title{font-size:clamp(1.7rem,3.4vw,2.4rem)}");
     } else if (cust.font === "mono") {
       R.push(".pf-name,.sec-title,.work-name,.j-title,.contact-title,.stat-num{font-family:var(--font-mono);font-weight:600;letter-spacing:-.02em;text-transform:none}");
@@ -2311,9 +2388,15 @@
     } else if (cust.theme === "mono") {
       R.push(".pf-name,.sec-title{letter-spacing:-.02em}");
       R.push(".btn-primary,.btn-quiet{border-radius:0}");
+    } else if (cust.theme === "ink") {
+      R.push(".pf-name{font-size:clamp(3.4rem,9vw,6.4rem);letter-spacing:-.045em}");
+    } else if (cust.theme === "forest") {
+      R.push(".pf-tagline{font-family:var(--font-serif);font-style:italic;font-size:21px}");
     } else if (cust.theme === "clay") {
       R.push(".pf-tagline{font-style:italic}");
     } else if (cust.theme === "dusk") {
+      R.push(".sec-title{font-weight:500}");
+      R.push(".pf-name{font-weight:600}");
       R.push(".work-name a{text-decoration:underline;text-decoration-color:var(--line);text-underline-offset:6px;text-decoration-thickness:2px}");
     } else if (cust.theme === "cobalt") {
       R.push(".btn-primary{border-radius:8px}");
@@ -2347,7 +2430,13 @@
     ["fonts/archivo-var-italic.woff2", "Archivo", "100 900", "italic"],
     ["fonts/ibm-plex-mono-400.woff2", "IBM Plex Mono", "400", "normal"],
     ["fonts/ibm-plex-mono-500.woff2", "IBM Plex Mono", "500", "normal"],
-    ["fonts/ibm-plex-mono-600.woff2", "IBM Plex Mono", "600", "normal"]
+    ["fonts/ibm-plex-mono-600.woff2", "IBM Plex Mono", "600", "normal"],
+    ["fonts/clash-display-500.woff2", "Clash Display", "500", "normal"],
+    ["fonts/clash-display-600.woff2", "Clash Display", "600", "normal"],
+    ["fonts/clash-display-700.woff2", "Clash Display", "700", "normal"],
+    ["fonts/zodiak-400.woff2", "Zodiak", "400", "normal"],
+    ["fonts/zodiak-400-italic.woff2", "Zodiak", "400", "italic"],
+    ["fonts/zodiak-700.woff2", "Zodiak", "700", "normal"]
   ];
   function bufToB64(buf) {
     var bytes = new Uint8Array(buf), s = "";
@@ -2504,6 +2593,9 @@
   buildPanel();
   populateThemeCards();
   populateTypeRows();
+  /* the specimen opens previewing the saved theme + type choices */
+  previewTheme(cust.theme);
+  previewFont(cust.font);
   applyCustomize();
   refreshGatedButtons();
   document.body.setAttribute("data-view", "generator");
