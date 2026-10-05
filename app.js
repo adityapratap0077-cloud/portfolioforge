@@ -298,188 +298,404 @@
     });
   }
 
-  /* WinAnsi (PDF standard Latin) \u2192 unicode, incl. 0x80\u20130x9F specials */
-  var WINANSI_EXTRA = { 0x80: "\u20ac", 0x82: "\u201a", 0x83: "\u0192", 0x84: "\u201e", 0x85: "\u2026",
-    0x86: "\u2020", 0x87: "\u2021", 0x88: "\u02c6", 0x89: "\u2030", 0x8A: "\u0160", 0x8B: "\u2039",
-    0x8C: "\u0152", 0x8E: "\u017d", 0x91: "\u2018", 0x92: "\u2019", 0x93: "\u201c", 0x94: "\u201d",
-    0x95: "\u2022", 0x96: "\u2013", 0x97: "\u2014", 0x98: "\u02dc", 0x99: "\u2122", 0x9A: "\u0161",
-    0x9B: "\u203a", 0x9C: "\u0153", 0x9E: "\u017e", 0x9F: "\u0178" };
-  function winAnsiChar(b) {
-    if (b < 0x80 || b >= 0xA0) return String.fromCharCode(b);
-    return WINANSI_EXTRA[b] || "?";
-  }
-
-  /* extract text from one decoded PDF content stream.
-     Paren-aware: collects every literal (...) and hex <...> string inside
-     BT...ET blocks in order — handles spaces inside parens and [...] TJ arrays. */
-  function parsePdfLiteral(blk, k) {
-    var bytes = [], j = k + 1, depth = 1;
-    while (j < blk.length && depth > 0) {
-      var c = blk[j];
-      if (c === "\\" && j + 1 < blk.length) {
-        var e = blk[j + 1], jj = j + 2;
-        if (e === "n") bytes.push(10);
-        else if (e === "r") bytes.push(13);
-        else if (e === "t") bytes.push(9);
-        else if (e === "b") bytes.push(8);
-        else if (e === "f") bytes.push(12);
-        else if (e >= "0" && e <= "7") {
-          var oct = e;
-          while (jj < blk.length && oct.length < 3 && blk[jj] >= "0" && blk[jj] <= "7") { oct += blk[jj]; jj++; }
-          bytes.push(parseInt(oct, 8));
-        } else if (e === "\n" || e === "\r") { if (e === "\r" && blk[jj] === "\n") jj++; /* line continuation */ }
-        else bytes.push(e.charCodeAt(0) & 255);
-        j = jj; continue;
-      }
-      if (c === "(") depth++;
-      else if (c === ")") { depth--; if (depth === 0) { j++; break; } }
-      if (depth > 0) bytes.push(c.charCodeAt(0) & 255);
-      j++;
-    }
-    return { bytes: bytes, next: j };
-  }
-  function collectPdfStrings(blk, out) {
-    var k = 0;
-    while (k < blk.length) {
-      var ch = blk[k];
-      if (ch === "(") {
-        var lit = parsePdfLiteral(blk, k), dec = "";
-        for (var q = 0; q < lit.bytes.length; q++) dec += winAnsiChar(lit.bytes[q]);
-        if (dec.trim()) out.push(dec);
-        k = lit.next;
-      } else if (ch === "<" && blk[k + 1] !== "<") {
-        var he = blk.indexOf(">", k + 1);
-        if (he < 0) break;
-        var hex = blk.slice(k + 1, he).replace(/\s+/g, ""), htxt = "";
-        for (var h = 0; h + 1 < hex.length; h += 2) htxt += winAnsiChar(parseInt(hex.substr(h, 2), 16));
-        if (htxt.trim()) out.push(htxt);
-        k = he + 1;
-      } else k++;
-    }
-  }
-  function extractPdfText(buf) {
-    var s = (typeof buf === "string") ? buf : (function () {
-      var raw = new Uint8Array(buf), t = "";
-      for (var i = 0; i < raw.length; i++) t += String.fromCharCode(raw[i]);
+  function latin1Bytes(u8) {
+      var t = "";
+      for (var i = 0; i < u8.length; i++) t += String.fromCharCode(u8[i]);
       return t;
-    })();
-    var out = [], bi = 0, m;
-    var btRe = /\bBT(?![A-Za-z])/g, etRe = /\bET(?![A-Za-z])/g;
-    while (true) {
-      btRe.lastIndex = bi; m = btRe.exec(s);
-      if (!m) break;
-      etRe.lastIndex = m.index + 2;
-      var me = etRe.exec(s);
-      if (!me) break;
-      collectPdfStrings(s.slice(m.index + 2, me.index), out);
-      bi = me.index + 2;
     }
-    return out.join("\n");
-  }
-
-  /* ASCII85Decode: 'z' = four zero bytes, '~>' ends the data, whitespace ignored */
-  function ascii85Decode(u8) {
-    var vals = [], i, c;
-    for (i = 0; i < u8.length; i++) {
-      c = u8[i];
-      if (c === 126) break;                  /* '~' of the '~>' end marker */
-      if (c === 122) vals.push("z");         /* 'z' */
-      else if (c >= 33 && c <= 117) vals.push(c - 33);  /* '!'..'u' */
+  function pdfDictSlice(text, from) {
+      var i = from + 2, depth = 1;
+      while (i < text.length && depth > 0) {
+        if (text.charAt(i) === "<" && text.charAt(i + 1) === "<") { depth++; i += 2; }
+        else if (text.charAt(i) === ">" && text.charAt(i + 1) === ">") { depth--; i += 2; }
+        else i++;
+      }
+      return text.slice(from + 2, i - 2);
     }
-    var out = [];
-    for (i = 0; i < vals.length;) {
-      if (vals[i] === "z") { out.push(0, 0, 0, 0); i++; continue; }
-      var v = 0, n = 0, k;
-      while (n < 5 && i + n < vals.length && vals[i + n] !== "z") { v = v * 85 + vals[i + n]; n++; }
-      for (k = n; k < 5; k++) v = v * 85 + 84;   /* pad a short final group with 'u' */
-      var b = [(v >>> 24) & 255, (v >>> 16) & 255, (v >>> 8) & 255, v & 255];
-      for (k = 0; k < n - 1; k++) out.push(b[k]);
-      i += n;
+  function pdfSubDict(text, key) {
+      var ki = text.indexOf(key);
+      if (ki < 0) return "";
+      var di = text.indexOf("<<", ki);
+      if (di < 0 || di > ki + key.length + 2) return "";
+      return pdfDictSlice(text, di);
     }
-    return new Uint8Array(out);
-  }
-
-  /* ASCIIHexDecode: hex pairs, '>' ends the data, odd tail padded with 0 */
-  function asciiHexDecode(u8) {
-    var hex = "", i, c;
-    for (i = 0; i < u8.length; i++) {
-      c = u8[i];
-      if (c === 62) break;                  /* '>' */
-      if ((c >= 48 && c <= 57) || (c >= 65 && c <= 70) || (c >= 97 && c <= 102))
-        hex += String.fromCharCode(c);
+  function parsePdfObjects(latin, bytes) {
+      var objs = {};
+      var re = /(\d+)\s+\d+\s+obj\b/g, m;
+      while ((m = re.exec(latin))) {
+        /* skip matches that start inside a longer number, e.g. the "5 0 obj"
+           in "15 0 obj" */
+        if (m.index > 0 && /\d/.test(latin.charAt(m.index - 1))) {
+          re.lastIndex = m.index + 1;
+          continue;
+        }
+        var num = +m[1];
+        var bodyStart = m.index + m[0].length;
+        var endIdx = latin.indexOf("endobj", bodyStart);
+        if (endIdx < 0) break;
+        var body = latin.slice(bodyStart, endIdx);
+        var sm = /\bstream(\r\n|\n|\r)/.exec(body);
+        var dict = body, stream = null;
+        if (sm) {
+          dict = body.slice(0, sm.index);
+          var ds = bodyStart + sm.index + 6 + sm[1].length;
+          var es = latin.lastIndexOf("endstream", endIdx);
+          var de = (es >= ds) ? es : endIdx;
+          while (de > ds) {
+            var cc = latin.charCodeAt(de - 1);
+            if (cc !== 10 && cc !== 13) break;
+            de--;
+          }
+          stream = bytes.slice(ds, de);
+        }
+        objs[num] = { dict: dict, stream: stream };
+        re.lastIndex = endIdx + 6;
+      }
+      return objs;
     }
-    if (hex.length % 2) hex += "0";
-    var out = [];
-    for (i = 0; i < hex.length; i += 2) out.push(parseInt(hex.substr(i, 2), 16));
-    return new Uint8Array(out);
-  }
-
-  /* ordered filter chain from a stream dict:
-     /Filter /FlateDecode  or  /Filter [/ASCII85Decode /FlateDecode] */
-  function pdfFilterNames(dict) {
-    var m = dict.match(/\/Filter\s*(\[[^\]]*\]|\/[A-Za-z0-9]+)/);
-    if (!m) return [];
-    var names = [], mm = m[1].match(/\/([A-Za-z0-9]+)/g) || [], i;
-    for (i = 0; i < mm.length; i++) names.push(mm[i].slice(1));
-    return names;
-  }
-  var PDF_SUPPORTED_FILTERS = { FlateDecode: 1, Fl: 1, ASCII85Decode: 1, A85: 1,
-                                ASCIIHexDecode: 1, AHx: 1 };
-
-  /* run a stream's filter chain in order, left to right */
-  function decodePdfStreamData(data, filters) {
-    var p = Promise.resolve(data);
-    filters.forEach(function (f) {
-      p = p.then(function (d) {
-        if (f === "FlateDecode" || f === "Fl")
-          return inflateAsync(d, "deflate").then(function (ab) { return new Uint8Array(ab); });
-        if (f === "ASCII85Decode" || f === "A85") return ascii85Decode(d);
-        if (f === "ASCIIHexDecode" || f === "AHx") return asciiHexDecode(d);
-        throw new Error("unsupported PDF filter: " + f);
+  function parseToUnicodeMap(text) {
+      var map = {}, codeLen = 1, m, mm, b;
+      function toChar(cp) {
+        try { return String.fromCodePoint(cp); } catch (e) { return null; }
+      }
+      var charRe = /beginbfchar([\s\S]*?)endbfchar/g;
+      while ((m = charRe.exec(text))) {
+        var lr = /<([0-9A-Fa-f]+)>\s*(?:<([0-9A-Fa-f]+)>|\((?:[^)\\]|\\.)*\))/g;
+        while ((mm = lr.exec(m[1]))) {
+          if (mm[1].length / 2 > codeLen) codeLen = mm[1].length / 2;
+          if (!mm[2]) continue;
+          var ch = toChar(parseInt(mm[2], 16));
+          if (ch !== null) map[parseInt(mm[1], 16)] = ch;
+        }
+      }
+      var rangeRe = /beginbfrange([\s\S]*?)endbfrange/g;
+      while ((m = rangeRe.exec(text))) {
+        var br = /<([0-9A-Fa-f]+)>\s*<([0-9A-Fa-f]+)>\s*(?:<([0-9A-Fa-f]+)>|\[([\s\S]*?)\])/g;
+        while ((b = br.exec(m[1]))) {
+          var lo = parseInt(b[1], 16), hi = parseInt(b[2], 16), c;
+          if (b[1].length / 2 > codeLen) codeLen = b[1].length / 2;
+          if (b[3]) {
+            var dlo = parseInt(b[3], 16);
+            for (c = lo; c <= hi && c - lo < 10000; c++) {
+              var ch2 = toChar(dlo + (c - lo));
+              if (ch2 !== null) map[c] = ch2;
+            }
+          } else if (b[4] !== undefined) {
+            var arr = b[4].match(/<([0-9A-Fa-f]+)>/g) || [], idx = 0, c2;
+            for (c2 = lo; c2 <= hi && idx < arr.length; c2++, idx++) {
+              var ch3 = toChar(parseInt(arr[idx].slice(1, -1), 16));
+              if (ch3 !== null) map[c2] = ch3;
+            }
+          }
+        }
+      }
+      return { map: map, codeLen: codeLen };
+    }
+  function parsePdfDifferences(dict) {
+      var m = /\/Differences\s*\[([^\]]*)\]/.exec(dict);
+      if (!m) return null;
+      var diffs = {}, code = 0;
+      var toks = m[1].match(/\d+|\/[A-Za-z0-9_.+\-]+/g) || [];
+      for (var i = 0; i < toks.length; i++) {
+        if (/^\d+$/.test(toks[i])) code = +toks[i];
+        else diffs[code++] = toks[i].slice(1);
+      }
+      return diffs;
+    }
+  function decodePdfBytes(bytes, font) {
+      var s = "", i, b, code, j;
+      if (font && font.cmap) {
+        var cl = font.cmap.codeLen, mp = font.cmap.map;
+        for (i = 0; i + cl <= bytes.length; i += cl) {
+          code = 0;
+          for (j = 0; j < cl; j++) code = (code << 8) | bytes[i + j];
+          if (mp[code] !== undefined) s += mp[code];
+        }
+        return s;
+      }
+      if (font && font.diffs) {
+        for (i = 0; i < bytes.length; i++) {
+          b = bytes[i];
+          var gn = font.diffs[b];
+          if (gn && PDF_GLYPH_NAMES[gn] !== undefined) s += PDF_GLYPH_NAMES[gn];
+          else s += winAnsiChar(b);
+        }
+        return s;
+      }
+      for (i = 0; i < bytes.length; i++) s += winAnsiChar(bytes[i]);
+      return s;
+    }
+  function collectStringsWithFont(seg, font, out) {
+      var k = 0;
+      while (k < seg.length) {
+        var ch = seg[k];
+        if (ch === "(") {
+          var lit = parsePdfLiteral(seg, k);
+          var dec = decodePdfBytes(lit.bytes, font);
+          if (dec) out.push(dec);
+          k = lit.next;
+        } else if (ch === "<" && seg[k + 1] !== "<") {
+          var he = seg.indexOf(">", k + 1);
+          if (he < 0) break;
+          var hex = seg.slice(k + 1, he).replace(/\s+/g, ""), bytes = [], h;
+          for (h = 0; h + 1 < hex.length; h += 2) bytes.push(parseInt(hex.substr(h, 2), 16));
+          if (hex.length % 2) bytes.push(parseInt(hex.charAt(hex.length - 1) + "0", 16));
+          var htxt = decodePdfBytes(bytes, font);
+          if (htxt) out.push(htxt);
+          k = he + 1;
+        } else k++;
+      }
+    }
+  function collectPdfStringsFontAware(blk, resFonts, segs) {
+      var font = null, y = null, cur = "";
+      function pushSeg() {
+        if (cur) segs.push({ y: y, text: cur });
+        cur = "";
+      }
+      function flushStrings(seg) {
+        var parts = [];
+        collectStringsWithFont(seg, font, parts);
+        cur += parts.join("");
+      }
+      var re = /\/([A-Za-z0-9_+\-]+)\s+[\d.]+\s+Tf(?![A-Za-z])|\b(-?[\d.]+)\s+(-?[\d.]+)\s+(-?[\d.]+)\s+(-?[\d.]+)\s+(-?[\d.]+)\s+(-?[\d.]+)\s+Tm(?![A-Za-z])|\bT\*(?![A-Za-z])|\b(-?[\d.]+)\s+(-?[\d.]+)\s+T[Dd](?![A-Za-z])/g;
+      var last = 0, m;
+      while ((m = re.exec(blk))) {
+        flushStrings(blk.slice(last, m.index));
+        if (m[1] !== undefined) {
+          if (resFonts && resFonts[m[1]]) font = resFonts[m[1]];
+        } else if (m[2] !== undefined) {
+          pushSeg(); y = parseFloat(m[7]); /* Tm sets the line position */
+        } else if (m[0].charAt(0) === "T") {
+          pushSeg(); y = null; /* T*: next line, position unknown */
+        } else if (parseFloat(m[9]) !== 0) {
+          pushSeg(); y = (y === null ? null : y + parseFloat(m[9]));
+        }
+        last = m.index + m[0].length;
+      }
+      flushStrings(blk.slice(last));
+      pushSeg();
+    }
+  function extractPdfTextFontAware(s, resFonts) {
+      var segs = [], bi = 0, m;
+      var btRe = /\bBT(?![A-Za-z])/g, etRe = /\bET(?![A-Za-z])/g;
+      while (true) {
+        btRe.lastIndex = bi; m = btRe.exec(s);
+        if (!m) break;
+        etRe.lastIndex = m.index + 2;
+        var me = etRe.exec(s);
+        if (!me) break;
+        collectPdfStringsFontAware(s.slice(m.index + 2, me.index), resFonts, segs);
+        bi = me.index + 2;
+      }
+      var lines = [], curY = null, curParts = [];
+      function flushLine() {
+        if (curParts.length) {
+          /* Fragments on one visual line are concatenated directly: generators
+             put real word gaps in as explicit space fragments (or embedded
+             spaces), while word-internal splits (kerning) carry no space.
+             Their x positions are not reliable enough for gap measuring
+             (generator font metrics differ from embedded /Widths). */
+          var line = "";
+          for (var i = 0; i < curParts.length; i++) line += curParts[i].text;
+          lines.push(line);
+        }
+        curParts = [];
+      }
+      segs.forEach(function (sg) {
+        if (curY === null || sg.y === null || Math.abs(sg.y - curY) > 2.5) {
+          flushLine();
+          curY = sg.y;
+        }
+        curParts.push(sg);
       });
-    });
-    return p;
-  }
-
-
-  function parsePdfBytes(buf) {
-    var bytes = new Uint8Array(buf), latin = "";
-    for (var i = 0; i < bytes.length; i++) latin += String.fromCharCode(bytes[i]);
-    var jobs = [], m;
-    var re = /stream(\r\n|\n|\r)([\s\S]*?)\r?\n?endstream/g;
-    while ((m = re.exec(latin))) {
-      var dictStart = latin.lastIndexOf("<<", m.index);
-      var dict = dictStart >= 0 ? latin.slice(dictStart, m.index) : "";
-      var dataStart = m.index + 6 + m[1].length;
-      var data = bytes.slice(dataStart, dataStart + m[2].length);
-      var filters = pdfFilterNames(dict), ok = true, fi;
-      for (fi = 0; fi < filters.length; fi++) {
-        if (!PDF_SUPPORTED_FILTERS[filters[fi]]) { ok = false; break; }
-      }
-      /* supported filter chains are decoded in order; anything else
-         (LZW, DCT, Crypt...) is skipped -- usually images */
-      if (ok) jobs.push({ data: data, filters: filters });
+      flushLine();
+      return lines.join("\n");
     }
-    if (!jobs.length) { var e0 = new Error("no readable content streams"); e0.code = "unparsable"; throw e0; }
-    var ps = jobs.map(function (j) {
-      var decoded = j.filters.length ? decodePdfStreamData(j.data, j.filters)
-                                     : Promise.resolve(j.data);
-      return decoded.then(function (u8) {
-        return new TextDecoder("latin1").decode(u8);
-      }).catch(function () { return ""; });
-    });
-    return Promise.all(ps).then(function (parts) {
-      var text = parts.map(extractPdfText).join("\n")
-        .split("\n").map(function (l) { return l.replace(/[ \t\xa0]+/g, " ").trim(); })
-        .filter(Boolean).join("\n");
-      if (text.length < 200) {
-        var e = new Error("scanned or image-only PDF");
-        e.code = "scanned";
-        throw e;
+  function parsePdfBytes(buf) {
+      var bytes = new Uint8Array(buf), latin = latin1Bytes(bytes);
+      var objs = parsePdfObjects(latin, bytes);
+      var nums = Object.keys(objs);
+      function filtersOK(dict) {
+        var filters = pdfFilterNames(dict), fi;
+        for (fi = 0; fi < filters.length; fi++)
+          if (!PDF_SUPPORTED_FILTERS[filters[fi]]) return null;
+        return filters;
       }
-      return text;
-    });
-  }
+      var jobs = nums.map(function (num) {
+        var o = objs[num];
+        if (!o.stream) return Promise.resolve(null);
+        var filters = filtersOK(o.dict);
+        /* unsupported filter chains are skipped -- usually images */
+        if (filters === null) return Promise.resolve(null);
+        var p = filters.length ? decodePdfStreamData(o.stream, filters)
+                               : Promise.resolve(o.stream);
+        return p.then(function (u8) {
+          return { num: +num, dict: o.dict, text: latin1Bytes(u8) };
+        }).catch(function () { return null; });
+      });
+      if (!jobs.length) { var e0 = new Error("no readable content streams"); e0.code = "unparsable"; throw e0; }
+      return Promise.all(jobs).then(function (list) {
+        var decoded = {};
+        list.forEach(function (d) { if (d) decoded[d.num] = d; });
+        /* ToUnicode CMaps are decoded for lookup, never text-extracted */
+        var cmaps = {};
+        Object.keys(decoded).forEach(function (num) {
+          if (/beginbfchar|beginbfrange/.test(decoded[num].text))
+            cmaps[num] = parseToUnicodeMap(decoded[num].text);
+        });
+        /* fonts: object number -> {cmap, diffs} */
+        var fonts = {};
+        Object.keys(objs).forEach(function (num) {
+          if (!/\/Type\s*\/Font/.test(objs[num].dict)) return;
+          var fi = { cmap: null, diffs: parsePdfDifferences(objs[num].dict) };
+          var tm = /\/ToUnicode\s+(\d+)\s+\d+\s+R/.exec(objs[num].dict);
+          if (tm && cmaps[tm[1]]) fi.cmap = cmaps[tm[1]];
+          fonts[num] = fi;
+        });
+        /* pages: content streams plus per-page font resources */
+        var pages = [];
+        Object.keys(objs).forEach(function (num) {
+          var dict = objs[num].dict;
+          if (!/\/Type\s*\/Page(?![A-Za-z])/.test(dict)) return;
+          var contents = [];
+          var cm = /\/Contents\s+(\d+)\s+\d+\s+R/.exec(dict);
+          if (cm) contents.push(+cm[1]);
+          var ca = /\/Contents\s*\[([^\]]*)\]/.exec(dict);
+          if (ca) (ca[1].match(/(\d+)\s+\d+\s+R/g) || []).forEach(function (r) {
+            contents.push(+r.match(/(\d+)/)[1]);
+          });
+          var resText = pdfSubDict(dict, "/Resources");
+          if (!resText) {
+            var rr = /\/Resources\s+(\d+)\s+\d+\s+R/.exec(dict);
+            if (rr && objs[rr[1]]) resText = objs[rr[1]].dict;
+          }
+          var resFonts = {};
+          var fontDict = pdfSubDict(resText, "/Font");
+          if (fontDict) (fontDict.match(/\/[A-Za-z0-9_+\-]+\s+\d+\s+\d+\s+R/g) || []).forEach(function (e) {
+            var p = /\/([A-Za-z0-9_+\-]+)\s+(\d+)/.exec(e);
+            if (p && fonts[p[2]]) resFonts[p[1]] = fonts[p[2]];
+          });
+          pages.push({ contents: contents, resFonts: resFonts });
+        });
+        var texts = [];
+        if (pages.length) {
+          pages.forEach(function (pg) {
+            pg.contents.forEach(function (cn) {
+              if (decoded[cn]) texts.push(extractPdfTextFontAware(decoded[cn].text, pg.resFonts));
+            });
+          });
+        } else {
+          /* no page tree found -- legacy behavior over non-CMap streams */
+          Object.keys(decoded).forEach(function (num) {
+            if (!cmaps[num]) texts.push(extractPdfText(decoded[num].text));
+          });
+        }
+        var text = texts.join("\n")
+          .split("\n").map(function (l) { return l.replace(/[ \t\xa0]+/g, " ").trim(); })
+          .filter(Boolean).join("\n");
+        if (text.length < 200) {
+          var e = new Error("scanned or image-only PDF");
+          e.code = "scanned";
+          throw e;
+        }
+        return text;
+      });
+    }
+  function pdfFilterNames(dict) {
+      var m = dict.match(/\/Filter\s*(\[[^\]]*\]|\/[A-Za-z0-9]+)/);
+      if (!m) return [];
+      var names = [], mm = m[1].match(/\/([A-Za-z0-9]+)/g) || [], i;
+      for (i = 0; i < mm.length; i++) names.push(mm[i].slice(1));
+      return names;
+    }
+  function decodePdfStreamData(data, filters) {
+      var p = Promise.resolve(data);
+      filters.forEach(function (f) {
+        p = p.then(function (d) {
+          if (f === "FlateDecode" || f === "Fl")
+            return inflateAsync(d, "deflate").then(function (ab) { return new Uint8Array(ab); });
+          if (f === "ASCII85Decode" || f === "A85") return ascii85Decode(d);
+          if (f === "ASCIIHexDecode" || f === "AHx") return asciiHexDecode(d);
+          throw new Error("unsupported PDF filter: " + f);
+        });
+      });
+      return p;
+    }
+  function parsePdfLiteral(blk, k) {
+      var bytes = [], j = k + 1, depth = 1;
+      while (j < blk.length && depth > 0) {
+        var c = blk[j];
+        if (c === "\\" && j + 1 < blk.length) {
+          var e = blk[j + 1], jj = j + 2;
+          if (e === "n") bytes.push(10);
+          else if (e === "r") bytes.push(13);
+          else if (e === "t") bytes.push(9);
+          else if (e === "b") bytes.push(8);
+          else if (e === "f") bytes.push(12);
+          else if (e >= "0" && e <= "7") {
+            var oct = e;
+            while (jj < blk.length && oct.length < 3 && blk[jj] >= "0" && blk[jj] <= "7") { oct += blk[jj]; jj++; }
+            bytes.push(parseInt(oct, 8));
+          } else if (e === "\n" || e === "\r") { if (e === "\r" && blk[jj] === "\n") jj++; /* line continuation */ }
+          else bytes.push(e.charCodeAt(0) & 255);
+          j = jj; continue;
+        }
+        if (c === "(") depth++;
+        else if (c === ")") { depth--; if (depth === 0) { j++; break; } }
+        if (depth > 0) bytes.push(c.charCodeAt(0) & 255);
+        j++;
+      }
+      return { bytes: bytes, next: j };
+    }
+  function winAnsiChar(b) {
+      if (b < 0x80 || b >= 0xA0) return String.fromCharCode(b);
+      return WINANSI_EXTRA[b] || "?";
+    }
+  function extractPdfText(buf) {
+      var s = (typeof buf === "string") ? buf : (function () {
+        var raw = new Uint8Array(buf), t = "";
+        for (var i = 0; i < raw.length; i++) t += String.fromCharCode(raw[i]);
+        return t;
+      })();
+      var out = [], bi = 0, m;
+      var btRe = /\bBT(?![A-Za-z])/g, etRe = /\bET(?![A-Za-z])/g;
+      while (true) {
+        btRe.lastIndex = bi; m = btRe.exec(s);
+        if (!m) break;
+        etRe.lastIndex = m.index + 2;
+        var me = etRe.exec(s);
+        if (!me) break;
+        collectPdfStrings(s.slice(m.index + 2, me.index), out);
+        bi = me.index + 2;
+      }
+      return out.join("\n");
+    }
+  var PDF_GLYPH_NAMES = (function () {
+      var g = { space: " ", hyphen: "-", endash: "–", emdash: "—",
+        quotedbl: "\"", quotesingle: "'", quoteleft: "‘", quoteright: "’",
+        quotedblleft: "“", quotedblright: "”", bullet: "•", ellipsis: "…",
+        period: ".", comma: ",", colon: ":", semicolon: ";", exclam: "!",
+        question: "?", parenleft: "(", parenright: ")", bracketleft: "[",
+        bracketright: "]", braceleft: "{", braceright: "}", at: "@",
+        numbersign: "#", dollar: "$", percent: "%", ampersand: "&",
+        asterisk: "*", plus: "+", less: "<", greater: ">", equal: "=",
+        slash: "/", backslash: "\\", bar: "|", asciitilde: "~",
+        underscore: "_", fi: "ﬁ", fl: "ﬂ" };
+      var digits = ["zero", "one", "two", "three", "four",
+                    "five", "six", "seven", "eight", "nine"];
+      for (var d = 0; d < 10; d++) g[digits[d]] = String(d);
+      var up = "ABCDEFGHIJKLMNOPQRSTUVWXYZ", lo = "abcdefghijklmnopqrstuvwxyz";
+      for (var i = 0; i < 26; i++) { g[up[i]] = up[i]; g[lo[i]] = lo[i]; }
+      return g;
+    })();
+  PDF_SUPPORTED_FILTERS = { FlateDecode: 1, Fl: 1, ASCII85Decode: 1, A85: 1,
+                                  ASCIIHexDecode: 1, AHx: 1 };
+  WINANSI_EXTRA = { 0x80: "\u20ac", 0x82: "\u201a", 0x83: "\u0192", 0x84: "\u201e", 0x85: "\u2026",
+      0x86: "\u2020", 0x87: "\u2021", 0x88: "\u02c6", 0x89: "\u2030", 0x8A: "\u0160", 0x8B: "\u2039",
+      0x8C: "\u0152", 0x8E: "\u017d", 0x91: "\u2018", 0x92: "\u2019", 0x93: "\u201c", 0x94: "\u201d",
+      0x95: "\u2022", 0x96: "\u2013", 0x97: "\u2014", 0x98: "\u02dc", 0x99: "\u2122", 0x9A: "\u0161",
+      0x9B: "\u203a", 0x9C: "\u0153", 0x9E: "\u017e", 0x9F: "\u0178" };
+
 
   /* \u2500\u2500 heuristic resume structure parser (operates on extracted text lines) \u2500\u2500 */
   var MONTHS_RE = "(?:jan|feb|mar|apr|may|jun|jul|aug|sep|oct|nov|dec)[a-z]*\\.?";
