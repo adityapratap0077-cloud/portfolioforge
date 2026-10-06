@@ -136,6 +136,18 @@
 
   /* ── profile photo (session memory + best-effort per-portfolio localStorage) ── */
   var customPhoto = "";
+  /* ── mascot selection (alternative to photo) ── */
+  var MASCOTS = [
+    { id: "fox", name: "Fox" },
+    { id: "astronaut", name: "Astronaut" },
+    { id: "cat", name: "Cat" },
+    { id: "bear", name: "Bear" },
+    { id: "bunny", name: "Bunny" },
+    { id: "droid", name: "Droid" },
+    { id: "glasses", name: "Scholar" },
+    { id: "builder", name: "Builder" }
+  ];
+  var customMascot = "";
   var photoKey = "";
   var currentAvatarUrl = "";
   var currentResumeName = "";
@@ -1696,8 +1708,19 @@
     return parts.slice(0, 2).map(function (w) { return w.charAt(0).toUpperCase(); }).join("") || "◆";
   }
   function applyAvatar() {
-    var img = $("pf-avatar"), mono = $("pf-monogram");
+    var img = $("pf-avatar"), mono = $("pf-monogram"), masc = $("pf-mascot");
     if (!img || !mono) return;
+    /* mascot takes priority over photo */
+    if (customMascot) {
+      img.style.display = "none";
+      mono.hidden = true;
+      if (masc) {
+        masc.hidden = false;
+        renderMascot(masc, customMascot);
+      }
+      return;
+    }
+    if (masc) { masc.hidden = true; masc.innerHTML = ""; }
     var src = customPhoto || currentAvatarUrl;
     if (src) {
       img.onerror = function () {
@@ -1742,6 +1765,15 @@
   }
   function setPhotoDataURL(dataURL) {
     customPhoto = dataURL || "";
+    /* photo replaces mascot */
+    if (customPhoto && customMascot) {
+      customMascot = "";
+      if (mascotKey) { try { localStorage.removeItem(mascotKey); } catch (e) { /* ignore */ } }
+      mascotKey = "";
+      var mrm = $("mascot-remove");
+      if (mrm) mrm.hidden = true;
+      syncMascotGrid();
+    }
     if (photoKey) { try { localStorage.removeItem(photoKey); } catch (e) { /* ignore */ } }
     photoKey = customPhoto ? ("pf-photo-v1:" + mode + ":" + (downloadSlug || "portfolio")) : "";
     if (photoKey) {
@@ -1764,6 +1796,189 @@
     if (prev) prev.hidden = true;
     if (rm) rm.hidden = true;
     photoHint("", false);
+  }
+
+  /* ── mascot ── */
+  var mascotKey = "";
+  function mascotStorageKey() {
+    return "pf-mascot-v1:" + mode + ":" + (downloadSlug || "portfolio");
+  }
+  function saveMascot() {
+    mascotKey = customMascot ? mascotStorageKey() : "";
+    try {
+      if (mascotKey) localStorage.setItem(mascotKey, customMascot);
+    } catch (e) { /* ignore */ }
+  }
+  function loadMascot() {
+    try {
+      var k = mascotStorageKey();
+      var v = localStorage.getItem(k);
+      if (v && MASCOTS.some(function (m) { return m.id === v; })) {
+        customMascot = v;
+        mascotKey = k;
+      }
+    } catch (e) { /* ignore */ }
+  }
+  function clearMascot() {
+    if (mascotKey) { try { localStorage.removeItem(mascotKey); } catch (e) { /* ignore */ } }
+    mascotKey = "";
+    customMascot = "";
+    var rm = $("mascot-remove");
+    if (rm) rm.hidden = true;
+    syncMascotGrid();
+    applyAvatar();
+  }
+  function selectMascot(id) {
+    customMascot = id;
+    /* mascot replaces photo */
+    clearCustomPhoto();
+    saveMascot();
+    var rm = $("mascot-remove");
+    if (rm) rm.hidden = false;
+    syncMascotGrid();
+    applyAvatar();
+  }
+  function syncMascotGrid() {
+    var grid = $("mascot-grid");
+    if (!grid) return;
+    var btns = grid.querySelectorAll(".mascot-opt");
+    for (var i = 0; i < btns.length; i++) {
+      btns[i].setAttribute("aria-checked", btns[i].dataset.mascot === customMascot ? "true" : "false");
+    }
+  }
+  function buildMascotGrid() {
+    var grid = $("mascot-grid");
+    if (!grid || grid.children.length) return;
+    MASCOTS.forEach(function (m) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "mascot-opt";
+      btn.dataset.mascot = m.id;
+      btn.setAttribute("role", "radio");
+      btn.setAttribute("aria-checked", "false");
+      btn.setAttribute("aria-label", m.name + " mascot");
+      var img = document.createElement("img");
+      /* use the anchor-face frame (center of directions sheet) as thumbnail */
+      img.src = "assets/mascots/" + m.id + "-directions.webp";
+      img.alt = m.name;
+      img.loading = "lazy";
+      /* CSS crops to show the center frame; full sheet is 3x3 */
+      img.style.objectFit = "none";
+      img.style.objectPosition = "center";
+      var label = document.createElement("span");
+      label.textContent = m.name;
+      btn.appendChild(img);
+      btn.appendChild(label);
+      btn.addEventListener("click", function () { selectMascot(m.id); });
+      grid.appendChild(btn);
+    });
+    syncMascotGrid();
+  }
+
+  /* ── mascot renderer (canvas, cursor-tracking) ── */
+  var mascotState = {};
+  function renderMascot(container, mascotId) {
+    if (!container || mascotState[mascotId]) return;
+    var cv = document.createElement("canvas");
+    cv.width = 360; cv.height = 360;
+    container.innerHTML = "";
+    container.appendChild(cv);
+    var ctx = cv.getContext("2d");
+    var dirs = new Image(), reacts = new Image();
+    var loaded = 0;
+    function onLoad() {
+      if (++loaded < 2) return;
+      startMascot(cv, ctx, dirs, reacts, mascotId);
+    }
+    dirs.onload = onLoad; reacts.onload = onLoad;
+    dirs.src = "assets/mascots/" + mascotId + "-directions.webp";
+    reacts.src = "assets/mascots/" + mascotId + "-reactions.webp";
+    mascotState[mascotId] = true;
+  }
+  function startMascot(cv, ctx, dirs, reacts, mascotId) {
+    var FW = dirs.width / 3, FH = dirs.height / 3; /* directions: 3x3 */
+    var RW = reacts.width / 4, RH = reacts.height / 2; /* reactions: 4x2 */
+    var dir = 4; /* center (0-8, 4=center) */
+    var reacting = -1, reactTimer = 0;
+    var blinkTimer = 0, blinking = false;
+
+    function drawFrame() {
+      ctx.clearRect(0, 0, cv.width, cv.height);
+      var sx, sy, sw, sh;
+      if (reacting >= 0) {
+        /* reactions sheet: 4 columns x 2 rows */
+        sx = (reacting % 4) * RW; sy = Math.floor(reacting / 4) * RH;
+        sw = RW; sh = RH;
+        ctx.drawImage(reacts, sx, sy, sw, sh, 0, 0, cv.width, cv.height);
+      } else {
+        /* directions sheet: 3x3, index 0-8 */
+        var row = Math.floor(dir / 3), col = dir % 3;
+        sx = col * FW; sy = row * FH;
+        sw = FW; sh = FH;
+        /* blink: use center frame briefly */
+        if (blinking) { sx = FW; sy = FH; }
+        ctx.drawImage(dirs, sx, sy, sw, sh, 0, 0, cv.width, cv.height);
+      }
+    }
+
+    function updateDirection(mx, my) {
+      var rect = cv.getBoundingClientRect();
+      var cx = rect.left + rect.width / 2, cy = rect.top + rect.height / 2;
+      var dx = mx - cx, dy = my - cy;
+      var dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 40) { dir = 4; return; } /* center when close */
+      var angle = Math.atan2(dy, dx) * 180 / Math.PI;
+      /* map angle to 8 directions (0=N, 1=NE, 2=E, etc.) */
+      /* directions sheet layout: 0=NW 1=N 2=NE / 3=W 4=center 5=E / 6=SW 7=S 8=SE */
+      if (angle >= -22.5 && angle < 22.5) dir = 5; /* E */
+      else if (angle >= 22.5 && angle < 67.5) dir = 8; /* SE */
+      else if (angle >= 67.5 && angle < 112.5) dir = 7; /* S */
+      else if (angle >= 112.5 && angle < 157.5) dir = 6; /* SW */
+      else if (angle >= -157.5 && angle < -112.5) dir = 0; /* NW */
+      else if (angle >= -112.5 && angle < -67.5) dir = 1; /* N */
+      else if (angle >= -67.5 && angle < -22.5) dir = 2; /* NE */
+      else dir = 3; /* W */
+    }
+
+    var mouseX = -9999, mouseY = -9999;
+    document.addEventListener("mousemove", function (e) {
+      mouseX = e.clientX; mouseY = e.clientY;
+      if (reacting < 0) updateDirection(mouseX, mouseY);
+    });
+
+    /* touch: face forward, tap for reactions */
+    cv.addEventListener("touchstart", function () { dir = 4; }, { passive: true });
+
+    var tapCount = 0, tapTimer = 0;
+    cv.addEventListener("click", function () {
+      var now = Date.now();
+      if (now - tapTimer < 400) tapCount++;
+      else tapCount = 1;
+      tapTimer = now;
+      if (tapCount >= 3) {
+        reacting = 7; /* dizzy */
+        tapCount = 0;
+      } else {
+        /* cycle through reactions: blink, heart, sparkles, grin */
+        reacting = [1, 2, 3, 5][Math.floor(Math.random() * 4)];
+      }
+      reactTimer = Date.now();
+    });
+
+    /* animation loop */
+    setInterval(function () {
+      /* end reaction after 1.2s */
+      if (reacting >= 0 && Date.now() - reactTimer > 1200) reacting = -1;
+      /* random blink every 3-6s */
+      if (!blinking && Math.random() < 0.005) {
+        blinking = true;
+        blinkTimer = Date.now();
+      }
+      if (blinking && Date.now() - blinkTimer > 150) blinking = false;
+      drawFrame();
+    }, 50);
+
+    drawFrame();
   }
   function handlePhotoFile(f) {
     var err = validatePhotoFile(f);
@@ -2231,6 +2446,16 @@
       setPhotoDataURL("");
       photoHint("", false);
     });
+    var mrm = $("mascot-remove");
+    if (mrm) mrm.addEventListener("click", function () { clearMascot(); });
+
+    /* mascot picker */
+    buildMascotGrid();
+    loadMascot();
+    if (customMascot) {
+      var mrm2 = $("mascot-remove");
+      if (mrm2) mrm2.hidden = false;
+    }
 
     /* editable text */
     var ft = $("fld-tagline"), fb = $("fld-bio");
@@ -2696,13 +2921,25 @@
     });
     /* avatar: custom photo → embed dataURL; monogram → keep; else GitHub avatar */
     var avImg = root.querySelector("#pf-avatar"), mono = root.querySelector("#pf-monogram");
-    if (customPhoto) {
+    var mascEl = root.querySelector("#pf-mascot");
+    if (customMascot) {
+      /* mascot: embed as static image (center frame from directions sheet) */
+      if (avImg) avImg.remove();
+      if (mono) mono.remove();
+      if (mascEl) {
+        mascEl.hidden = false;
+        mascEl.innerHTML = '<img src="assets/mascots/' + customMascot + '-directions.webp" alt="Mascot" style="width:120px;height:120px;object-fit:cover;border-radius:50%;">';
+      }
+    } else if (customPhoto) {
       if (avImg) { avImg.src = customPhoto; avImg.style.display = ""; }
       if (mono) mono.remove();
+      if (mascEl) mascEl.remove();
     } else if (mono) {
       if (avImg) avImg.remove();
+      if (mascEl) mascEl.remove();
     } else if (avImg) {
       if (mono) mono.remove();
+      if (mascEl) mascEl.remove();
       avImg.style.display = "";
     }
     root.querySelectorAll(".work-excerpt.loading").forEach(function (el) {
@@ -2717,7 +2954,27 @@
     var main = root.querySelector("main.portfolio");
     var script = withMotion ? '<script>\n' + exportMotionJS() + "\n</script>\n" : "";
 
-    exportFontCSS().then(function (fontCSS) {
+    /* helper: fetch mascot sheet as data URI (for embedding in download) */
+    function getMascotDataURI() {
+      return new Promise(function (resolve) {
+        if (!customMascot) { resolve(""); return; }
+        var url = "assets/mascots/" + customMascot + "-directions.webp";
+        fetch(url).then(function (r) { return r.blob(); }).then(function (blob) {
+          var fr = new FileReader();
+          fr.onload = function () { resolve(fr.result); };
+          fr.onerror = function () { resolve(""); };
+          fr.readAsDataURL(blob);
+        }).catch(function () { resolve(""); });
+      });
+    }
+
+    Promise.all([exportFontCSS(), getMascotDataURI()]).then(function (results) {
+      var fontCSS = results[0], mascotURI = results[1];
+      /* if mascot was selected, replace the placeholder with embedded data URI */
+      if (customMascot && mascotURI) {
+        var mImg = main.querySelector("#pf-mascot img");
+        if (mImg) mImg.src = mascotURI;
+      }
       var doc = "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n<meta charset=\"UTF-8\">\n" +
         '<meta name="viewport" content="width=device-width, initial-scale=1.0">\n' +
         "<title>" + esc(name) + " · Portfolio</title>\n" +

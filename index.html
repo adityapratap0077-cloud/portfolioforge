@@ -225,6 +225,7 @@
         <span class="avatar-wrap">
           <img id="pf-avatar" class="avatar" alt="Profile photo">
           <span id="pf-monogram" class="monogram" aria-hidden="true" hidden></span>
+          <span id="pf-mascot" class="pf-mascot" aria-hidden="true" hidden></span>
         </span>
         <p id="pf-status" class="availability" hidden><span class="avail-dot" aria-hidden="true"></span>Open for work</p>
       </div>
@@ -394,6 +395,12 @@
       </div>
       <p id="photo-hint" class="photo-hint" aria-live="polite"></p>
       <p class="ctl-hint">Stored only in this browser. Your photo never leaves this device, and it is removed when you generate a new portfolio.</p>
+      <div class="mascot-section">
+        <h4>Or pick a mascot</h4>
+        <p class="ctl-hint">A playful character that follows your cursor. Pick one instead of a photo — you can switch back anytime.</p>
+        <div class="mascot-grid" id="mascot-grid" role="radiogroup" aria-label="Choose a mascot"></div>
+        <button id="mascot-remove" class="btn-quiet sm" type="button" hidden>Remove mascot</button>
+      </div>
     </div>
     <div class="ctl-group">
       <h3>Motion</h3>
