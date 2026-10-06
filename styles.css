@@ -649,10 +649,16 @@ input, textarea, select { font: inherit; font-size: 16px; color: var(--ink); }
 .mascot-opt { border: 2px solid var(--line); border-radius: 12px; padding: 8px 4px; background: var(--card); cursor: pointer; text-align: center; transition: border-color 0.15s, transform 0.15s; }
 .mascot-opt:hover { transform: translateY(-2px); }
 .mascot-opt[aria-checked="true"] { border-color: var(--accent); }
-.mascot-opt img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; }
+.mascot-thumb { width: 100%; aspect-ratio: 1; overflow: hidden; border-radius: 8px; position: relative; background: var(--bg); }
+.mascot-thumb img { position: absolute; width: 300%; height: 300%; left: -100%; top: -100%; max-width: none; }
 .mascot-opt span { display: block; font-size: 0.75rem; margin-top: 4px; color: var(--muted); }
 .mascot-opt[aria-checked="true"] span { color: var(--ink); font-weight: 600; }
 #mascot-remove { margin-top: 8px; }
+@media (max-width: 640px) {
+  .mascot-grid { grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .mascot-opt { padding: 10px 6px; }
+  .mascot-opt span { font-size: 0.8rem; }
+}
 
 /* ── mascot display (in portfolio header) ── */
 .pf-mascot { position: relative; width: 120px; height: 120px; }

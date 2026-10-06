@@ -145,7 +145,15 @@
     { id: "bunny", name: "Bunny" },
     { id: "droid", name: "Droid" },
     { id: "glasses", name: "Scholar" },
-    { id: "builder", name: "Builder" }
+    { id: "builder", name: "Builder" },
+    { id: "panda", name: "Panda" },
+    { id: "penguin", name: "Penguin" },
+    { id: "owl", name: "Owl" },
+    { id: "tiger", name: "Tiger" },
+    { id: "robot", name: "Robot" },
+    { id: "pirate", name: "Pirate" },
+    { id: "wizard", name: "Wizard" },
+    { id: "frog", name: "Frog" }
   ];
   var customMascot = "";
   var photoKey = "";
@@ -1857,17 +1865,17 @@
       btn.setAttribute("role", "radio");
       btn.setAttribute("aria-checked", "false");
       btn.setAttribute("aria-label", m.name + " mascot");
+      /* thumbnail wrapper shows center cell of 3x3 sheet */
+      var thumb = document.createElement("div");
+      thumb.className = "mascot-thumb";
       var img = document.createElement("img");
-      /* use the anchor-face frame (center of directions sheet) as thumbnail */
       img.src = "assets/mascots/" + m.id + "-directions.webp";
       img.alt = m.name;
       img.loading = "lazy";
-      /* CSS crops to show the center frame; full sheet is 3x3 */
-      img.style.objectFit = "none";
-      img.style.objectPosition = "center";
+      thumb.appendChild(img);
       var label = document.createElement("span");
       label.textContent = m.name;
-      btn.appendChild(img);
+      btn.appendChild(thumb);
       btn.appendChild(label);
       btn.addEventListener("click", function () { selectMascot(m.id); });
       grid.appendChild(btn);
