@@ -310,8 +310,8 @@ input, textarea, select { font: inherit; font-size: 16px; color: var(--ink); }
 }
 .hero-title {
   font-family: var(--font-display); font-weight: 700;
-  font-size: clamp(2.9rem, 6vw, 4.6rem);
-  letter-spacing: -0.04em; line-height: 0.98;
+  font-size: clamp(3.2rem, 7vw, 6rem);
+  letter-spacing: -0.03em; line-height: 0.96;
   margin: 0 0 22px; text-wrap: balance;
   /* the vendored Clash Display subset ships a narrow word space (~14% of em);
      restore legible separation on display headlines without touching tracking */
@@ -378,7 +378,7 @@ input, textarea, select { font: inherit; font-size: 16px; color: var(--ink); }
   border-left: 1px solid var(--line-soft);
 }
 .step-rows li:last-child { border-bottom: 1px solid var(--line); }
-.step-rows h3 { font-family: var(--font-display); font-weight: 600; font-size: 1.6rem; letter-spacing: -0.02em; margin: 0 0 8px; }
+.step-rows h3 { font-family: var(--font-display); font-weight: 600; font-size: 1.9rem; letter-spacing: -0.025em; margin: 0 0 8px; }
 .step-rows p { color: var(--muted); font-size: 1.02rem; line-height: 1.7; margin: 0; max-width: 60ch; }
 
 /* theme cards */
