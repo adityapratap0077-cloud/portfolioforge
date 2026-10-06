@@ -1238,7 +1238,7 @@
   }
   function refreshGatedButtons() {
     var locked = authGateActive();
-    ["customize-btn", "download-btn"].forEach(function (id) {
+    ["customize-btn"].forEach(function (id) {
       var b = $(id);
       if (!b) return;
       b.classList.toggle("locked", locked);
@@ -3028,7 +3028,8 @@
     });
   })();
   $("startover-btn").addEventListener("click", startOver);
-  $("download-btn").addEventListener("click", requireAuth("download the HTML", downloadHTML));
+  /* Download HTML stays free and anonymous — only customize/save-to-account sits behind auth */
+  $("download-btn").addEventListener("click", downloadHTML);
 
   /* mode tabs */
   $("tab-github").addEventListener("click", function () { setMode("github"); });
