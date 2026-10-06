@@ -1905,7 +1905,7 @@
   }
   function startMascot(cv, ctx, dirs, reacts, mascotId) {
     var FW = dirs.width / 3, FH = dirs.height / 3; /* directions: 3x3 */
-    var RW = reacts.width / 4, RH = reacts.height / 2; /* reactions: 4x2 */
+    var RW = reacts.width / 3, RH = reacts.height / 3; /* reactions: 3x3 */
     var dir = 4; /* center (0-8, 4=center) */
     var reacting = -1, reactTimer = 0;
     var blinkTimer = 0, blinking = false;
@@ -1914,8 +1914,8 @@
       ctx.clearRect(0, 0, cv.width, cv.height);
       var sx, sy, sw, sh;
       if (reacting >= 0) {
-        /* reactions sheet: 4 columns x 2 rows */
-        sx = (reacting % 4) * RW; sy = Math.floor(reacting / 4) * RH;
+        /* reactions sheet: 3x3 (0=blink, 1=heart, 2=sparkle, 3=surprised, 4=wink, 5=bashful, 6=sleepy, 7=dizzy, 8=delighted) */
+        sx = (reacting % 3) * RW; sy = Math.floor(reacting / 3) * RH;
         sw = RW; sh = RH;
         ctx.drawImage(reacts, sx, sy, sw, sh, 0, 0, cv.width, cv.height);
       } else {
