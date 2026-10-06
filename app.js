@@ -1869,7 +1869,7 @@
       var thumb = document.createElement("div");
       thumb.className = "mascot-thumb";
       var img = document.createElement("img");
-      img.src = "assets/mascots/" + m.id + "-directions.webp";
+      img.src = "assets/mascots/thumbs/" + m.id + "-thumb.webp";
       img.alt = m.name;
       img.loading = "lazy";
       thumb.appendChild(img);

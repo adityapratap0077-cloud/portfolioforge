@@ -650,7 +650,7 @@ input, textarea, select { font: inherit; font-size: 16px; color: var(--ink); }
 .mascot-opt:hover { transform: translateY(-2px); }
 .mascot-opt[aria-checked="true"] { border-color: var(--accent); }
 .mascot-thumb { width: 100%; aspect-ratio: 1; overflow: hidden; border-radius: 8px; position: relative; background: var(--bg); }
-.mascot-thumb img { position: absolute; width: 300%; height: 300%; left: -100%; top: -100%; max-width: none; }
+.mascot-thumb img { width: 100%; height: 100%; object-fit: cover; }
 .mascot-opt span { display: block; font-size: 0.75rem; margin-top: 4px; color: var(--muted); }
 .mascot-opt[aria-checked="true"] span { color: var(--ink); font-weight: 600; }
 #mascot-remove { margin-top: 8px; }
