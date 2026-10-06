@@ -3016,6 +3016,17 @@
 
   $("retry-btn").addEventListener("click", function () { generate(lastUsername); });
   $("error-back-btn").addEventListener("click", function () { show("generator"); });
+  /* specimen CTA: a real control — show the generator and take the user to the form */
+  (function () {
+    var cta = $("specimen-cta");
+    if (!cta) return;
+    cta.addEventListener("click", function (e) {
+      e.preventDefault();
+      show("generator");
+      var f = $("gen-form");
+      if (f) f.scrollIntoView({ behavior: REDUCED ? "auto" : "smooth", block: "start" });
+    });
+  })();
   $("startover-btn").addEventListener("click", startOver);
   $("download-btn").addEventListener("click", requireAuth("download the HTML", downloadHTML));
 
