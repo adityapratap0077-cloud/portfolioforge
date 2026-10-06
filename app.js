@@ -1738,6 +1738,7 @@
       };
       img.src = src;
       img.alt = (($("pf-name") && $("pf-name").textContent) || "Profile") + " photo";
+      img.hidden = false;
       img.style.display = "";
       mono.hidden = true;
     } else {
