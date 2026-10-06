@@ -1,3 +1,9 @@
+<p>
+  <a href="https://portfolioforge-delta.vercel.app"><img src="https://img.shields.io/badge/Live-Demo-brightgreen?style=flat-square" alt="Live Demo" /></a>
+  <img src="https://img.shields.io/badge/Client--side-100%25-blue?style=flat-square" alt="100% client-side" />
+  <img src="https://img.shields.io/github/license/adityapratap0077-cloud/portfolioforge?style=flat-square" alt="License" />
+</p>
+
 # PortfolioForge
 
 Turn a GitHub username or a resume file into a crafted, editorial portfolio in
