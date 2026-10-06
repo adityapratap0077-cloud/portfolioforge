@@ -3085,6 +3085,13 @@
   /* init */
   buildPanel();
   populateThemeCards();
+  /* the theme count is rendered from the registry, never hardcoded */
+  (function () {
+    var words = ["Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven",
+      "Eight", "Nine", "Ten", "Eleven", "Twelve"];
+    var el = $("theme-count-word");
+    if (el) el.textContent = words[THEMES.length] || String(THEMES.length);
+  })();
   populateTypeRows();
   /* the specimen opens previewing the saved theme + type choices */
   previewTheme(cust.theme);
