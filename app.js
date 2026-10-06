@@ -1583,7 +1583,7 @@
     } else {
       projs.forEach(function (p) {
         var card = document.createElement("article");
-        card.className = "work-card reveal";
+        card.className = "work-card";
         var tech = (p.tech || []).slice(0, 6);
         card.innerHTML =
           (tech.length ? '<p class="work-kicker">' + esc(tech.join(" · ")) + "</p>" : "") +
@@ -2649,7 +2649,7 @@
     } else {
       top.forEach(function (r) {
         var card = document.createElement("article");
-        card.className = "work-card reveal";
+        card.className = "work-card";
         var kickerBits = [];
         if (r.language) kickerBits.push(r.language);
         (r.topics || []).slice(0, 4).forEach(function (t) { kickerBits.push(t); });
