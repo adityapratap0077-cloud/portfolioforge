@@ -688,9 +688,9 @@
       for (var i = 0; i < 26; i++) { g[up[i]] = up[i]; g[lo[i]] = lo[i]; }
       return g;
     })();
-  PDF_SUPPORTED_FILTERS = { FlateDecode: 1, Fl: 1, ASCII85Decode: 1, A85: 1,
+  var PDF_SUPPORTED_FILTERS = { FlateDecode: 1, Fl: 1, ASCII85Decode: 1, A85: 1,
                                   ASCIIHexDecode: 1, AHx: 1 };
-  WINANSI_EXTRA = { 0x80: "\u20ac", 0x82: "\u201a", 0x83: "\u0192", 0x84: "\u201e", 0x85: "\u2026",
+  var WINANSI_EXTRA = { 0x80: "\u20ac", 0x82: "\u201a", 0x83: "\u0192", 0x84: "\u201e", 0x85: "\u2026",
       0x86: "\u2020", 0x87: "\u2021", 0x88: "\u02c6", 0x89: "\u2030", 0x8A: "\u0160", 0x8B: "\u2039",
       0x8C: "\u0152", 0x8E: "\u017d", 0x91: "\u2018", 0x92: "\u2019", 0x93: "\u201c", 0x94: "\u201d",
       0x95: "\u2022", 0x96: "\u2013", 0x97: "\u2014", 0x98: "\u02dc", 0x99: "\u2122", 0x9A: "\u0161",
