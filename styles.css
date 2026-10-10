@@ -95,8 +95,8 @@
 /* ── theme tokens: 8 designed worlds ── */
 body[data-theme="paper"] {
   --bg: #F6F3EC; --bg-2: #ECE7D8; --surface: #FFFFFF;
-  --ink: #1D1A16; --muted: #6E6557; --faint: #A79B84;
-  --accent: #D9480F; --accent-2: #B53A10; --on-accent: #FFF6EC;
+  --ink: #1D1A16; --muted: #6E6557; --faint: #776B5C;
+  --accent: #BE3D0C; --accent-2: #B53A10; --on-accent: #FFF6EC;
   --line: #DCD4BE; --line-soft: #E9E2D0;
   color-scheme: light;
 }
