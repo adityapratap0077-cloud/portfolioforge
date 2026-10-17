@@ -145,7 +145,7 @@ body[data-theme="dusk"] {
 body[data-theme="mono"] {
   --bg: #FAFAF8; --bg-2: #EFEFEA; --surface: #FFFFFF;
   --ink: #141414; --muted: #5F5F5C; --faint: #A3A39E;
-  --accent: #D92D20; --accent-2: #B42318; --on-accent: #FFF3F1;
+  --accent: #C9271A; --accent-2: #B42318; --on-accent: #FFF3F1;
   --line: #DCDCD6; --line-soft: #E8E8E2;
   color-scheme: light;
 }
