@@ -10,10 +10,16 @@
 <meta name="description" content="PortfolioForge turns a GitHub profile or resume into a full portfolio site. Type a username, tune the theme, download the HTML or share a link.">
 <title>PortfolioForge: print a portfolio from your GitHub</title>
 <link rel="canonical" href="https://portfolioforge-app.vercel.app/">
+<meta property="og:title" content="PortfolioForge: print a portfolio from your GitHub">
+<meta property="og:description" content="PortfolioForge turns a GitHub profile or resume into a full portfolio site. Type a username, tune the theme, download the HTML or share a link.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://portfolioforge-app.vercel.app/">
+<meta property="og:image" content="https://portfolioforge-app.vercel.app/og-image.png">
 <script type="application/ld+json">
 {"@context":"https://schema.org","@graph":[
 {"@type":"Person","@id":"https://adityapratapjhansi.vercel.app/about.html#aditya-pratap","name":"Aditya Pratap","url":"https://adityapratapjhansi.vercel.app/about.html","sameAs":["https://github.com/adityapratap0077-cloud","https://www.linkedin.com/in/aditya-pratap-1244a7383/"]},
-{"@type":"WebSite","name":"PortfolioForge","url":"https://portfolioforge-app.vercel.app/","author":{"@id":"https://adityapratapjhansi.vercel.app/about.html#aditya-pratap"}}
+{"@type":"WebSite","name":"PortfolioForge","url":"https://portfolioforge-app.vercel.app/","author":{"@id":"https://adityapratapjhansi.vercel.app/about.html#aditya-pratap"},
+{"@type":"Organization","name":"PortfolioForge","url":"https://portfolioforge-app.vercel.app/","founder":{"@id":"https://adityapratapjhansi.vercel.app/about.html#aditya-pratap"}}
 ]}
 </script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%23D9480F'/%3E%3Ctext x='16' y='22' font-family='monospace' font-size='16' font-weight='bold' text-anchor='middle' fill='%23F6F3EC'%3EPF%3C/text%3E%3C/svg%3E">
@@ -153,6 +159,7 @@
     <div class="wrap foot-inner">
       <span class="brand small"><span class="brand-mark" aria-hidden="true">PF</span> PortfolioForge</span>
       <p class="foot-note">Portfolios printed from public data. <a href="https://adityapratapjhansi.vercel.app/about.html" style="color:inherit; text-decoration:underline;">Built by Aditya Pratap</a></p>
+      <p class="foot-note">More by Aditya Pratap: <a href="https://getreelforge.vercel.app/" style="color:inherit; text-decoration:underline;">ReelForge</a> · <a href="https://aivideostudio-app.vercel.app/" style="color:inherit; text-decoration:underline;">AI Video Studio</a> · <a href="privacy.html" style="color:inherit; text-decoration:underline;">Privacy</a></p>
     </div>
   </footer>
 </section>
@@ -160,7 +167,7 @@
 <!-- ══════════ DASHBOARD ══════════ -->
 <section id="view-dashboard" class="view" hidden>
   <div class="wrap narrow">
-    <h1 class="page-title">Saved portfolios</h1>
+    <h2 class="page-title">Saved portfolios</h2>
     <div id="dashboard-content"></div>
   </div>
 </section>
@@ -237,7 +244,7 @@
         </span>
         <p id="pf-status" class="availability" hidden><span class="avail-dot" aria-hidden="true"></span>Open for work</p>
       </div>
-      <h1 id="pf-name" class="pf-name"></h1>
+      <h2 id="pf-name" class="pf-name"></h2>
       <p id="pf-tagline" class="pf-tagline"></p>
       <ul class="hero-meta">
         <li id="pf-location-item"><span id="pf-location"></span></li>
