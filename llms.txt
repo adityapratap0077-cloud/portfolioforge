@@ -1,0 +1,7 @@
+# PortfolioForge
+
+> PortfolioForge generates a portfolio site from a GitHub profile or a resume.
+
+Type a GitHub username or drop in a resume, and PortfolioForge reads the public profile, repos and activity, then prints a complete portfolio site. Users can tune the theme and typography, download the portfolio as a standalone HTML file, or save it and share a link. It is free to try, needs no signup, and uses public data only.
+
+Built by Aditya Pratap: https://my-portfolio-khaki-gamma-94.vercel.app/about.html
