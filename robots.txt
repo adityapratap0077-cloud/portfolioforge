@@ -19,4 +19,4 @@ Allow: /
 User-agent: Google-Extended
 Allow: /
 
-Sitemap: https://portfolioforge-delta.vercel.app/sitemap.xml
+Sitemap: https://portfolioforge-app.vercel.app/sitemap.xml
