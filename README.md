@@ -8,16 +8,16 @@
 
 Turn a GitHub username or a resume file into a crafted, editorial portfolio in
 seconds. Customize the theme, typography, copy and photo, download a
-standalone HTML file — or create a free account to save portfolios and share
+standalone HTML file, or create a free account to save portfolios and share
 them with public links.
 
-**Design** — warm paper/ink editorial system: serif display type, hairline
+**Design**: warm paper/ink editorial system: serif display type, hairline
 rules, generous whitespace, one restrained accent per theme. Six themes
 (Paper, Ink, Moss, Clay, Slate, Bone), three type pairings, compact/comfortable
 density, and subtle motion (scroll reveals + a soft card tilt) that respects
 `prefers-reduced-motion`. No gradients-as-decoration, no glow, no orbs.
 
-**Backend (optional)** — Supabase Auth + Postgres. Email/password sign-up,
+**Backend (optional)**: Supabase Auth + Postgres. Email/password sign-up,
 persisted sessions, a protected dashboard (list / open / rename / delete /
 public-private toggle / share links), and public read-only pages at
 `view.html?token=…`. Everything works without it: the generator is 100%
@@ -33,8 +33,8 @@ python3 -m http.server 8080
 # open http://localhost:8080
 ```
 
-- `index.html` — generator, portfolio view, dashboard, auth
-- `view.html?token=…` — public read-only portfolio page
+- `index.html`: generator, portfolio view, dashboard, auth
+- `view.html?token=…`: public read-only portfolio page
 
 ## Connect Supabase (free)
 
@@ -48,7 +48,7 @@ python3 -m http.server 8080
 4. Reload the site. Sign-in / Create account appears in the header; the
    **Save** button in the portfolio toolbar and the **Dashboard** tab light up.
 
-The anon key is safe to publish — RLS restricts it to owner-only
+The anon key is safe to publish, RLS restricts it to owner-only
 reads/writes. Public portfolios are readable **only** through the
 `get_public_portfolio(p_token)` RPC, which returns a row solely when it is
 `is_public` **and** the exact unguessable 32-char `share_token` matches.
@@ -71,13 +71,13 @@ cannot be enumerated via the API.
 
 ## Privacy notes
 
-- Resume files are parsed entirely in your browser — nothing is uploaded.
+- Resume files are parsed entirely in your browser, nothing is uploaded.
 - Uploaded profile photos are stored only in the browser (localStorage);
   generating a new portfolio clears them.
 - **Contact review:** after parsing a resume, the app shows every detected
   email, phone, location and profile link and asks you to opt each one in.
   Email, phone and location default to **excluded**. Anything you exclude is
-  never rendered, saved, downloaded, or shared — the saved record keeps only
+  never rendered, saved, downloaded, or shared, the saved record keeps only
   the approved fields plus your include/exclude decision.
 - Saved portfolios store only the rendered portfolio data + your
   customization. Share links work only while a portfolio is marked Public.
@@ -85,5 +85,5 @@ cannot be enumerated via the API.
 ## Tech
 
 Static HTML/CSS/vanilla JS. Optional backend: Supabase (Auth + Postgres +
-RLS) via the official JS client loaded from CDN — no server code, deploys
+RLS) via the official JS client loaded from CDN, no server code, deploys
 as a static site anywhere.
