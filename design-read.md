@@ -1,4 +1,4 @@
-# PortfolioForge full redesign — design read (taste-skill §0.B, recorded 2026-09-24)
+# PortfolioForge full redesign: design read (taste-skill §0.B, recorded 2026-09-24)
 
 ## Reading
 Reading this as: **a portfolio-generation product for developers and creative
@@ -11,13 +11,13 @@ contemporary Swiss/editorial web design and quiet product tooling.
 - VISUAL_DENSITY: 3 (generous whitespace, sparse hairline rules, calm editorial rhythm)
 
 ## Direction (reference-informed)
-- **Framer:** the product itself is the visual — restrained monochrome surfaces, one accent, tight display tracking (−0.04em), slim navigation, high-fidelity output previews.
+- **Framer:** the product itself is the visual, restrained monochrome surfaces, one accent, tight display tracking (−0.04em), slim navigation, high-fidelity output previews.
 - **Cargo:** the interface recedes and the real work leads; black-on-white restraint, minimal chrome.
-- **Adobe Portfolio:** a small curated theme set where themes differ meaningfully through navigation, grid density, image ratio and typography — hence per-theme flourishes, not palette swaps.
+- **Adobe Portfolio:** a small curated theme set where themes differ meaningfully through navigation, grid density, image ratio and typography, hence per-theme flourishes, not palette swaps.
 - **Cyd Stumpel:** one flat accent, a cohesive motion grammar, work index first.
-- **Adham Dannaway:** one complete conceptual hero idea rather than many effects — here: the live typographic portfolio specimen on the generator.
+- **Adham Dannaway:** one complete conceptual hero idea rather than many effects, here: the live typographic portfolio specimen on the generator.
 - **Tobias van Schneider:** project title, category, real imagery and useful captions create professionalism.
-- **Stefan Vitasović:** normalize every project through one consistent presentation system so varied source material feels cohesive — the work index.
+- **Stefan Vitasović:** normalize every project through one consistent presentation system so varied source material feels cohesive, the work index.
 
 ## Killed
 Orange-on-black Vanta node field · industrial "forge" styling · stamps and spec
@@ -35,9 +35,9 @@ view · 8 themes · 4 type systems · "1 star" pluralization · OAuth continuity
 js/backend.js (untouched) · zero CDN dependencies.
 
 ## Audit notes (anti-slop)
-- Hero: one idea (name, tagline, portrait, availability) — no centered generic hero.
+- Hero: one idea (name, tagline, portrait, availability), no centered generic hero.
 - Eyebrows: none repeated; section headlines stand on their own.
-- Work: a single editorial index, not cards — title, kicker, excerpt, mono meta line.
+- Work: a single editorial index, not cards, title, kicker, excerpt, mono meta line.
 - Motion: scroll reveals only, expo-out, 70ms staggers; hero intro runs once on the generator.
 - Status dots: none decorative; "Open for work" is genuine state-driven copy.
 - Drawer stacking: #drawer is a direct child of body, z-index 95 > nav 60; verified via elementFromPoint.
