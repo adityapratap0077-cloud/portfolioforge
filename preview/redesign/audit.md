@@ -1,4 +1,4 @@
-# PortfolioForge Redesign — Before / After / Why
+# PortfolioForge Redesign: Before / After / Why
 
 Date: 2026-09-24. Full redesign of the PortfolioForge frontend (workshop direction).
 Scope: `index.html`, `styles.css`, `app.js` (themes, fonts, labels, export), `view.html`.
@@ -62,7 +62,7 @@ Untouched: `js/backend.js` (OAuth continuity, auth, dashboard, saving, sharing).
 - GitHub → portfolio generation from public data; resume import (PDF/DOCX/TXT/MD, 100% client-side)
 - Theme / typography / section / copy / photo customization, all persisted per mode
 - Standalone HTML download; Supabase auth + saved portfolios + shareable `view.html`
-- Auth gates on Customize and Download; OAuth snapshot/restore (2h expiry, auto-open Customize) in `js/backend.js` — untouched
+- Auth gates on Customize and Download; OAuth snapshot/restore (2h expiry, auto-open Customize) in `js/backend.js`, untouched
 - "Open for work" stamp renders only when `hireable === true` (now via `hidden`, not `display`)
 - Reduced-motion support, mobile bottom action bar, safe-area insets, 44px touch targets
 
